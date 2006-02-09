@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "System.Installer", "System.Installer\System.Installer.vcproj", "{21E3E617-C18F-411F-8759-3E399CBB757B}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wipt-get", "wipt-get\wipt-get.csproj", "{CE4162CC-B0C4-4541-A37D-CF64301012D4}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{21E3E617-C18F-411F-8759-3E399CBB757B}.Debug.ActiveCfg = Debug|Win32
+		{21E3E617-C18F-411F-8759-3E399CBB757B}.Debug.Build.0 = Debug|Win32
+		{21E3E617-C18F-411F-8759-3E399CBB757B}.Release.ActiveCfg = Release|Win32
+		{21E3E617-C18F-411F-8759-3E399CBB757B}.Release.Build.0 = Release|Win32
+		{CE4162CC-B0C4-4541-A37D-CF64301012D4}.Debug.ActiveCfg = Debug|.NET
+		{CE4162CC-B0C4-4541-A37D-CF64301012D4}.Debug.Build.0 = Debug|.NET
+		{CE4162CC-B0C4-4541-A37D-CF64301012D4}.Release.ActiveCfg = Release|.NET
+		{CE4162CC-B0C4-4541-A37D-CF64301012D4}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
