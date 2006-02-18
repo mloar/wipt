@@ -36,6 +36,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Net;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 using Microsoft.Win32;
@@ -211,7 +212,6 @@ namespace ACM.Wipt
     /// </returns>
     private static bool Load()
     {
-
       string path = Environment.GetFolderPath(
           Environment.SpecialFolder.CommonApplicationData) + "\\ACM\\Wipt";
       Directory.CreateDirectory(path);
@@ -229,8 +229,18 @@ namespace ACM.Wipt
         return false;
       }
 
-      BinaryFormatter formatter = new BinaryFormatter();
-      library = Hashtable.Synchronized((Hashtable)formatter.Deserialize(st));
+      try
+      {
+        BinaryFormatter formatter = new BinaryFormatter();
+        library = Hashtable.Synchronized((Hashtable)formatter.Deserialize(st));
+      }
+      catch(SerializationException)
+      {
+        st.Close();
+        library = Hashtable.Synchronized(new Hashtable());
+        return false;
+      }
+
       st.Close();
 
       return true;
@@ -515,7 +525,12 @@ namespace ACM.Wipt
     public static object GetProduct(string name)
     {
       if(library == null)
-        Load();
+      {
+        if(!Load())
+        {
+          throw new WiptException("Could not load package database.");
+        }
+      }
       if(library.ContainsKey(name.ToLower()))
       {
         return library[name.ToLower()];
@@ -533,7 +548,12 @@ namespace ACM.Wipt
     public static object[] GetAll()
     {
       if(library == null)
-        Load();
+      {
+        if(!Load())
+        {
+          throw new WiptException("Could not load package database.");
+        }
+      }
       object[] list = new object[library.Keys.Count];
       int i = 0;
       foreach(object s in library.Keys)
