@@ -50,6 +50,7 @@ namespace ACM.Wipt
       {
         bool devel = false;
         bool ignoretransforms = false;
+        bool batch = false;
         string command = "";
         string packages = "";
 
@@ -57,6 +58,9 @@ namespace ACM.Wipt
         {
           switch(arg.ToLower())
           {
+            case "--batch":
+              batch = true;
+            break;
             case "--devel":
               devel = true;
             break;
@@ -74,14 +78,14 @@ namespace ACM.Wipt
 
         if(command == "")
         {
-          Console.WriteLine("Error: no command specified");
+          Console.Error.WriteLine("Error: no command specified");
           Usage();
           return;
         }
 
         if((command == "install" || command == "remove") && packages == "")
         {
-          Console.WriteLine("Error: no packages specified");
+          Console.Error.WriteLine("Error: no packages specified");
           Usage();
           return;
         }
@@ -89,7 +93,7 @@ namespace ACM.Wipt
         switch(command)
         {
           case "install":
-            Install(packages.Split(','), devel, ignoretransforms);
+            Install(packages.Split(','), devel, ignoretransforms, batch);
           break;
           case "remove":
             Remove(packages.Split(','));
@@ -111,7 +115,7 @@ namespace ACM.Wipt
       }
 
     private static void Install(string[] packages, bool devel,
-        bool ignoretransforms)
+        bool ignoretransforms, bool batch)
     {
       foreach(string p in packages)
       {
@@ -123,12 +127,12 @@ namespace ACM.Wipt
           object obj = Library.GetProduct(p);
           if(obj == null)
           {
-            Console.WriteLine("No such product " + p);
+            Console.Error.WriteLine("No such product " + p);
             continue;
           }
           else if(obj is Suite)
           {
-            InstallSuite((Suite)obj, devel, ignoretransforms);
+            InstallSuite((Suite)obj, devel, ignoretransforms, batch);
             continue;
           }
 
@@ -143,7 +147,7 @@ namespace ACM.Wipt
 
           if(instVersion == null)
           {
-            Console.WriteLine("Specified version not listed for product "
+            Console.Error.WriteLine("Specified version not listed for product "
                 + product.name);
             continue;
           }
@@ -166,7 +170,7 @@ namespace ACM.Wipt
           }
           if(URL == "")
           {
-            Console.WriteLine("No package listed for specified version of "
+            Console.Error.WriteLine("No package listed for specified version of "
                 + product.name + ".  Contact the repository maintainer.");
             continue;
           }
@@ -175,7 +179,7 @@ namespace ACM.Wipt
           if(state != InstallState.Removed && state != InstallState.Absent 
               && state != InstallState.Unknown)
           {
-            Console.WriteLine(product.name + " is already the latest version");
+            Console.Error.WriteLine(product.name + " is already the latest version");
             continue;
           }
 
@@ -205,10 +209,10 @@ namespace ACM.Wipt
 
           if(ret != 0)
           {
-            Console.WriteLine(
+            Console.Error.WriteLine(
                 "Error code {0} returned from installProduct for "
                 + product.name,ret);
-            Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+            Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
           }
         }
         catch(WiptException e)
@@ -219,25 +223,29 @@ namespace ACM.Wipt
     }
 
     private static void InstallSuite(Suite suite, bool devel,
-        bool ignoretransforms)
+        bool ignoretransforms, bool batch)
     {
-      Console.WriteLine(suite.name 
-          + " is a suite consisting of the following products:");
-      foreach(string s in suite.products)
+      string c = "";
+      if(!batch)
       {
-        Console.WriteLine(s);
-      }
-      Console.WriteLine("\r\nWould you like to install them?");
-      Console.Write("(y or n): ");
-      string c = Console.ReadLine();
-      while(c != "y" && c != "Y" && c != "n" && c != "N")
-      {
-        Console.Write("\r\nPlease type 'y' or 'n': ");
+        Console.WriteLine(suite.name 
+            + " is a suite consisting of the following products:");
+        foreach(string s in suite.products)
+        {
+          Console.WriteLine(s);
+        }
+        Console.WriteLine("\r\nWould you like to install them?");
+        Console.Write("(y or n): ");
         c = Console.ReadLine();
+        while(c != "y" && c != "Y" && c != "n" && c != "N")
+        {
+          Console.Write("\r\nPlease type 'y' or 'n': ");
+          c = Console.ReadLine();
+        }
       }
-      if(c == "y" || c == "Y")
+      if(c == "y" || c == "Y" || batch)
       {
-        Install(suite.products, devel, ignoretransforms);
+        Install(suite.products, devel, ignoretransforms, batch);
       }
     }
 
@@ -328,6 +336,7 @@ namespace ACM.Wipt
       string usage = @"
         Usage:	wipt-get [options] <command> <product>[ <product> <product> ...]
         OPTIONS
+        --batch                     Don't ask any questions
         --devel                     Install development version
         --ignore-transforms         Don't apply transforms listed in repository
 

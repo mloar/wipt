@@ -109,17 +109,19 @@ namespace ACM.Wipt
         return v1.major < v2.major || ((v1.major == v2.major) && v1.minor < v2.major)
             || ((v1.major == v2.major) && (v1.minor == v2.minor) && (v1.build < v2.build));
       }
-      public static bool operator ==(Version v1, Version v2)
+      public override bool Equals(object o)
       {
-        return (v1.major == v2.major) && (v1.minor == v2.minor) && (v1.build == v2.build);
+        if(!(o is Version))
+        {
+          return false;
+        }
+        
+        Version v = (Version)o;
+        return (major == v.major) && (minor == v.minor) && (build == v.build);
       }
       public static bool operator >(Version v1, Version v2)
       {
         return !((v1 < v2) || (v1 == v2));
-      }
-      public static bool operator !=(Version v1, Version v2)
-      {
-        return !(v1 == v2);
       }
     }
 

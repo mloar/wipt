@@ -67,6 +67,7 @@ namespace ACM
             static String* getErrorMessage(unsigned int code);
             static InstallState getProductState(Guid productCode);
             static int ExecuteHandler(UINT iMessageType, LPCTSTR message);
+            static Guid GetPackageUpgradeCode(String* path);
           private:
             static ProgressHandler* handler;
 

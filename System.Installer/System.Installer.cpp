@@ -427,6 +427,11 @@ namespace ACM
           ret	= Marshal::PtrToStringUni(buffer);
           return ret;
         }
+
+        Guid ApplicationDatabase::GetPackageUpgradeCode(String* path)
+        {
+          return Guid::Empty;
+        }
       }
     }
   }

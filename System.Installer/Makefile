@@ -2,7 +2,11 @@
 
 System.Installer.dll: System.Installer.obj AssemblyInfo.obj
 	link /OUT:System.Installer.dll /INCREMENTAL:NO /NOLOGO /DLL /FIXED:No nochkclr.obj mscoree.lib msi.lib kernel32.lib System.Installer.obj
+!IF "$(FRAMEWORKVERSION)"=="v1.1.4322"
 	signcode -cn "Special Interest Group for Windows Development" System.Installer.dll
+!ELSE
+	signtool sign /n "Special Interest Group for Windows Development" System.Installer.dll
+!ENDIF
 
 System.Installer.obj: StdAfx.pch System.Installer.cpp
 	cl /D "WIN32" /D "_WINDLL" /D "_MBCS" /MT /GS /Yu"stdafx.h" /nologo /c /Zi /clr /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\mscorlib.dll" /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll" System.Installer.cpp
