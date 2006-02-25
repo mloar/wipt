@@ -130,6 +130,22 @@ namespace ACM.Wipt
     }
 
   /// <remarks>
+  /// The Dependency class represents a dependency.
+  /// </remarks>
+  [Serializable()]
+    public class Dependency
+    {
+      public string productName;
+      public Version minVersion;
+      public Version maxVersion;
+
+      public Dependency(string ProductName)
+      {
+        productName = ProductName;
+      }
+    }
+
+  /// <remarks>
   /// The Product class represents an installable product, such as rwho or
   /// Wipt.
   /// </remarks>
@@ -148,7 +164,9 @@ namespace ACM.Wipt
       /// A Version object for the product's development version.
       /// </summary> 
       public Version develVersion;
-      /// <summary>A array of transforms for this product.</summary>
+      /// <summary>An array of Dependency objects this product depends on.</summary>
+      public Dependency[] dependencies;
+      /// <summary>An array of transforms for this product.</summary>
       public Transform[] transforms;
 
       /// <summary>The constructor for the Product class.</summary>
@@ -435,6 +453,41 @@ namespace ACM.Wipt
                         e.GetAttribute("Minor"),
                         e.GetAttribute("Build")
                         );
+                    break;
+                  case "Dependency":
+                    Dependency d = new Dependency(e.GetAttribute("ProductName"));
+                    if(p.dependencies == null)
+                    {
+                      p.dependencies = new Dependency[1];
+                      p.dependencies[0] = d;
+                    }
+                    else
+                    {
+                      Dependency[] nd = new Dependency[p.dependencies.Length + 1];
+                      Array.Copy(p.dependencies, nd, p.dependencies.Length);
+                      nd[p.dependencies.Length] = d;
+                      p.dependencies = nd;
+                    }
+                    foreach(XmlElement t in e.ChildNodes)
+                    {
+                      switch(t.Name)
+                      {
+                        case "MinVersion":
+                          d.minVersion = new Version(
+                              t.GetAttribute("Major"),
+                              t.GetAttribute("Minor"),
+                              t.GetAttribute("Build")
+                              );
+                        break;
+                        case "MaxVersion":
+                          d.maxVersion = new Version(
+                              t.GetAttribute("Major"),
+                              t.GetAttribute("Minor"),
+                              t.GetAttribute("Build")
+                              );
+                        break;
+                      }
+                    }
                     break;
                   case "Package":
                     Package a = new Package(e.GetAttribute("ProductCode"));

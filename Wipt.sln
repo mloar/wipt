@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wipt-get", "wipt-get\wipt-g
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WiptLib", "WiptLib\WiptLib.csproj", "{269B8A70-BEDB-4C36-BAB1-05E475F9C4EC}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -21,6 +25,10 @@ Global
 		{CE4162CC-B0C4-4541-A37D-CF64301012D4}.Debug.Build.0 = Debug|.NET
 		{CE4162CC-B0C4-4541-A37D-CF64301012D4}.Release.ActiveCfg = Release|.NET
 		{CE4162CC-B0C4-4541-A37D-CF64301012D4}.Release.Build.0 = Release|.NET
+		{269B8A70-BEDB-4C36-BAB1-05E475F9C4EC}.Debug.ActiveCfg = Debug|.NET
+		{269B8A70-BEDB-4C36-BAB1-05E475F9C4EC}.Debug.Build.0 = Debug|.NET
+		{269B8A70-BEDB-4C36-BAB1-05E475F9C4EC}.Release.ActiveCfg = Release|.NET
+		{269B8A70-BEDB-4C36-BAB1-05E475F9C4EC}.Release.Build.0 = Release|.NET
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

@@ -7,11 +7,14 @@ all:
 	nmake /$(MAKEFLAGS) WiptLib.dll
 	cd ..\wipt-get
 	nmake /$(MAKEFLAGS) wipt-get.exe
+	cd ..\wipt-gui
+	nmake /$(MAKEFLAGS) wipt-gui.exe
 	cd ..
 	-mkdir bin
 	copy /y wipt-get\wipt-get.exe bin
 	copy /y wiptlib\wiptlib.dll bin
 	copy /y System.Installer\System.Installer.dll bin
+	copy /y wipt-gui\wipt-gui.exe bin
 
 wipt.msi: all
 	candle /nologo wipt.wxs
@@ -23,6 +26,7 @@ wipt.msi: all
 !ENDIF
 
 clean:
+	-rmdir /s /q bin
 	-del Wipt.msi Wipt.wixobj
 	cd System.Installer
 	nmake /$(MAKEFLAGS) clean
