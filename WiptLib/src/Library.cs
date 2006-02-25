@@ -104,6 +104,10 @@ namespace ACM.Wipt
         if(Build != "")
           build = int.Parse(Build);
       }
+        public override string ToString()
+        {
+            return string.Format("{0}.{1}.{2}",major,minor,build);
+        }
       public static bool operator <(Version v1, Version v2)
       {
         return v1.major < v2.major || ((v1.major == v2.major) && v1.minor < v2.major)
@@ -228,7 +232,7 @@ namespace ACM.Wipt
       catch(IOException)
       {
         library = Hashtable.Synchronized(new Hashtable());
-        return false;
+        return true;
       }
 
       try
