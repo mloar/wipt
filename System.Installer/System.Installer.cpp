@@ -264,7 +264,7 @@ namespace ACM
                         break;
                       //field 1 = 2,field 2 will contain the number of ticks the bar has moved
                       // movement direction determined by g_bForwardProgress set by reset progress msg
-                      handler->Invoke((g_iProgress + (g_bForwardProgress ? iField[1] : -1*iField[1]))/g_iProgressTotal);
+                      handler->Invoke((g_iProgress + (g_bForwardProgress ? iField[1] : -1*iField[1])));
                       //SendMessage(/*handle to your progress control*/,PBM_DELTAPOS,g_bForwardProgress ? iField[1] : -1*iField[1],0);
                       break;
                     }
@@ -355,36 +355,8 @@ namespace ACM
             return ERROR_NOT_ENOUGH_MEMORY;
           }
 
-          /* There is no MsiUninstallProduct().  According to the documentation, 
-           * MsiConfigureProduct(code, 0, INSTALLSTATE_ABSENT) should be equivalent.
-           * However, I had some issues with it.  Therefore, I'll just run msiexec.exe
-           * and tell it to remove.  It knows what to do.
-           */
           setInternalUI(None);
           UINT ret = MsiConfigureProduct(code, 0, INSTALLSTATE_ABSENT);
-          /*STARTUPINFO strt;
-          // ZeroMemory is a macro that calls memset(), which isn't in the managed libs
-          // SecureZeroMemory calls a Win32 API to do its work
-          SecureZeroMemory(&strt,sizeof(STARTUPINFO));
-          strt.cb = sizeof(STARTUPINFO);
-          strt.dwFlags = 0;
-          PROCESS_INFORMATION proc;
-          UINT ret = 0;
-
-          // DANGER WILL ROBINSON!!! DANGER!!!
-          // HARDCODED PATH!!! OH, THE HUMANITY!!!
-          if(CreateProcess(L"C:\\WINDOWS\\SYSTEM32\\msiexec.exe",code,NULL,NULL,FALSE,0,NULL,NULL,&strt,&proc))
-          {
-          WaitForSingleObject(proc.hProcess,INFINITE);
-          DWORD code;
-          GetExitCodeProcess(proc.hProcess,&code);
-          ret = code;
-          CloseHandle(proc.hProcess);
-          CloseHandle(proc.hThread);
-          }
-          else
-          ret = GetLastError();*/
-          Marshal::FreeHGlobal(code);
 
           return ret;
         }
