@@ -188,11 +188,18 @@ namespace ACM.Wipt
           {
             foreach(Transform transform in product.transforms)
             {
-              if(transform.version.major == instVersion.major
-                  && transform.version.minor == instVersion.minor)
+              if(transform.minVersion != null)
               {
-                transforms = transform.URL + ";";
+                if(transform.minVersion > instVersion)
+                  continue;
               }
+              if(transform.maxVersion != null)
+              {
+                if(transform.maxVersion < instVersion)
+                  continue;
+              }
+
+              transforms = transform.URL + ";";
             }
           }
 

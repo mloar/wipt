@@ -69,10 +69,15 @@ namespace ACM.Wipt
     public class Transform
     {
       /// <summary>
-      /// A Version object containing the version this transform applies to.
+      /// A Version object containing the minimum version this transform applies to.
       /// The build member may be null.
       /// </summary>
-      public Version version;
+      public Version minVersion;
+      /// <summary>
+      /// A Version object containing the maximum version this transform applies to.
+      /// The build member may be null.
+      /// </summary>
+      public Version maxVersion;
       /// <summary>The URL of the transform.</summary>
       public string URL;
       /// <summary>The constructor for the Transform class.</summary>
@@ -538,8 +543,15 @@ namespace ACM.Wipt
                     {
                       switch(t.Name)
                       {
-                        case "Version":
-                          q.version = new Version(
+                        case "MinVersion":
+                          q.minVersion = new Version(
+                            t.GetAttribute("Major"),
+                            t.GetAttribute("Minor"),
+                            t.GetAttribute("Build")
+                            );
+                        break;
+                        case "MaxVersion":
+                          q.maxVersion = new Version(
                             t.GetAttribute("Major"),
                             t.GetAttribute("Minor"),
                             t.GetAttribute("Build")

@@ -38,7 +38,8 @@
       </Directory>
 		</Directory>
 		<Feature Id="DefaultFeature" Title="Default Install" Level="1">
-			<ComponentRef Id="WiptComponent" />
+			<ComponentRef Id="WiptgetComponent" />
+      <ComponentRef Id="WiptguiComponent" />
 			<ComponentRef Id="SystemInstallerComponent" />
       <ComponentRef Id="WiptLibComponent" />
 		</Feature>
