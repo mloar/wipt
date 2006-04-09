@@ -91,32 +91,29 @@ namespace ACM.Wipt
     public class Version
     {
       /// <summary>The major version number.</summary>
-      public int major;
+      public string major;
       /// <summary>The minor version number.</summary>
-      public int minor;
+      public string minor;
       /// <summary>The build version number.</summary>
-      public int build;
+      public string build;
       /// <summary>The constructor for the Version class.</summary>
       /// <param name="Major">The major version number.</param>
       /// <param name="Minor">The minor version number.</param>
       /// <param name="Build">The build version number.</param>
       public Version(string Major, string Minor, string Build)
       {
-        if(Major != "")
-          major = int.Parse(Major);
-        if(Minor != "")
-          minor = int.Parse(Minor);
-        if(Build != "")
-          build = int.Parse(Build);
+          major = Major;
+          minor = Minor;
+          build = Build;
       }
-        public override string ToString()
-        {
-            return string.Format("{0}.{1}.{2}",major,minor,build);
-        }
+      public override string ToString()
+      {
+        return string.Format("{0}.{1}.{2}",major,minor,build);
+      }
       public static bool operator <(Version v1, Version v2)
       {
-        return v1.major < v2.major || ((v1.major == v2.major) && v1.minor < v2.major)
-            || ((v1.major == v2.major) && (v1.minor == v2.minor) && (v1.build < v2.build));
+        return v1.major.CompareTo(v2.major) < 0 || ((v1.major.CompareTo(v2.major) < 0) && v1.minor.CompareTo(v2.major) < 0)
+            || ((v1.major.CompareTo(v2.major) < 0) && (v1.minor.CompareTo(v2.minor) < 0) && (v1.build.CompareTo(v2.build) < 0));
       }
       public override bool Equals(object o)
       {

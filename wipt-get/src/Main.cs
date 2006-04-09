@@ -488,13 +488,13 @@ namespace ACM.Wipt
       }
     }
 
-    private static int index;
+    private static int index = 0;
     private static void ProgressHandler(double progress)
     {
       if(++index >= 4)
         index = 0;
       char[] bob = new char[] {'\\','|','/','-'};
-      Console.Write(new char[] {'\x08',bob[index]});
+      Console.Write(new char[] {'\x08', bob[index]});
     }
   }
 }

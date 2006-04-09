@@ -25,9 +25,9 @@
 							<File Id="wiptget.exeFile" Name="WIPT-GET.EXE" DiskId="1" src="wipt-get\wipt-get.exe" Vital="yes" KeyPath="yes" />
 							<Environment Id="UpdatePath" Name="PATH" Action="create" System="yes" Part="last" Value="[INSTALLDIR]" />
 						</Component>
-            <Component Id="WiptguiComponent" Guid="B4FCF30E-409C-45D4-81AE-CB41F0B88BF7">
+            <!--<Component Id="WiptguiComponent" Guid="B4FCF30E-409C-45D4-81AE-CB41F0B88BF7">
 							<File Id="wiptgui.exeFile" Name="WIPT-GUI.EXE" DiskId="1" src="wipt-gui\wipt-gui.exe" Vital="yes" KeyPath="yes" />
-            </Component>
+            </Component>-->
 					</Directory>
 				</Directory>
 			</Directory>
@@ -39,7 +39,7 @@
 		</Directory>
 		<Feature Id="DefaultFeature" Title="Default Install" Level="1">
 			<ComponentRef Id="WiptgetComponent" />
-      <ComponentRef Id="WiptguiComponent" />
+      <!--<ComponentRef Id="WiptguiComponent" />-->
 			<ComponentRef Id="SystemInstallerComponent" />
       <ComponentRef Id="WiptLibComponent" />
 		</Feature>

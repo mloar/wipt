@@ -7,14 +7,18 @@ all:
 	nmake /$(MAKEFLAGS) WiptLib.dll
 	cd ..\wipt-get
 	nmake /$(MAKEFLAGS) wipt-get.exe
+!IF "$(FRAMEWORKVERSION)"=="v2.0.50727"
 	cd ..\wipt-gui
 	nmake /$(MAKEFLAGS) wipt-gui.exe
+!ENDIF
 	cd ..
 	-mkdir bin
 	copy /y wipt-get\wipt-get.exe bin
 	copy /y wiptlib\wiptlib.dll bin
 	copy /y System.Installer\System.Installer.dll bin
+!IF "$(FRAMEWORKVERSION)"=="v2.0.50727"
 	copy /y wipt-gui\wipt-gui.exe bin
+!ENDIF
 
 wipt.msi: all
 	candle /nologo wipt.wxs
@@ -27,11 +31,13 @@ wipt.msi: all
 
 clean:
 	-rmdir /s /q bin
-	-del Wipt.msi Wipt.wixobj
+	-del Wipt.msi Wipt.wixobj Wipt.ncb
 	cd System.Installer
 	nmake /$(MAKEFLAGS) clean
 	cd ..\wipt-get
 	nmake /$(MAKEFLAGS) clean
 	cd ..\WiptLib
+	nmake /$(MAKEFLAGS) clean
+	cd ..\wipt-gui
 	nmake /$(MAKEFLAGS) clean
 	cd ..

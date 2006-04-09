@@ -10,3 +10,4 @@ wipt-get.exe: src\Main.cs src\AssemblyInfo.cs res\App.ico ..\System.Installer\Sy
 
 clean:
 	-del wipt-get.exe wipt-get.pdb
+	-rmdir /s /q obj
