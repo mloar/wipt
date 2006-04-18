@@ -31,6 +31,7 @@
  *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  *  DEALINGS WITH THE SOFTWARE.
  */
+
 using System;
 using System.IO;
 using System.Net;
@@ -83,17 +84,24 @@ namespace ACM.Wipt
           return;
         }
 
-        if((command == "install" || command == "remove") && packages == "")
+        if((command == "apply" || command == "install" || command == "remove") && packages == "")
         {
           Console.Error.WriteLine("Error: no packages specified");
           Usage();
           return;
         }
 
+        bool success = true;
         switch(command)
         {
+          case "apply":
+            Apply(packages.Split(','));
+          break;
           case "install":
-            Install(packages.Split(','), devel, ignoretransforms, batch);
+            foreach(string package in packages.Split(','))
+            {
+              success = success && Install(package, devel, ignoretransforms, batch);
+            }
           break;
           case "remove":
             Remove(packages.Split(','));
@@ -108,16 +116,15 @@ namespace ACM.Wipt
             Update();
           break;
           default:
-          Usage();
+            Usage();
           break;
         }
 
       }
 
-    private static void Install(string[] packages, bool devel,
-        bool ignoretransforms, bool batch)
+    private static void Apply(string[] patches)
     {
-      foreach(string p in packages)
+      foreach(string p in patches)
       {
         if(p == "")
           continue;
@@ -127,98 +134,34 @@ namespace ACM.Wipt
           object obj = Library.GetProduct(p);
           if(obj == null)
           {
-            Console.Error.WriteLine("No such product " + p);
+            Console.Error.WriteLine("No such patch " + p);
             continue;
           }
-          else if(obj is Suite)
+          else if(!(obj is Patch))
           {
-            InstallSuite((Suite)obj, devel, ignoretransforms, batch);
-            continue;
-          }
-
-          Product product = (Product)obj;
-
-          Version instVersion;
-
-          if(devel)
-            instVersion = product.develVersion;
-          else
-            instVersion = product.stableVersion;
-
-          if(instVersion == null)
-          {
-            Console.Error.WriteLine("Specified version not listed for product "
-                + product.name);
+            Console.Error.WriteLine(
+                p + " is not a patch.  Use the install command to install it."
+                );
             continue;
           }
 
-          string URL = "";
-          Guid productCode = Guid.Empty;
-          if(product.packages != null)
-          {
-            foreach(Package package in product.packages)
-            {
-              if(package.version.major == instVersion.major
-                  && package.version.minor == instVersion.minor
-                  && package.version.build == instVersion.build)
-              {
-                URL = package.URL;
-                productCode = package.productCode;
-                break;
-              }
-            }
-          }
-          if(URL == "")
-          {
-            Console.Error.WriteLine("No package listed for specified version of "
-                + product.name + ".  Contact the repository maintainer.");
-            continue;
-          }
+          Patch patch = (Patch)obj;
 
-          InstallState state = ApplicationDatabase.getProductState(productCode);
-          if(state != InstallState.Removed && state != InstallState.Absent 
-              && state != InstallState.Unknown)
-          {
-            Console.Error.WriteLine(product.name + " is already the latest version");
-            continue;
-          }
-
-          string transforms = "";
-          if(!ignoretransforms && product.transforms != null)
-          {
-            foreach(Transform transform in product.transforms)
-            {
-              if(transform.minVersion != null)
-              {
-                if(transform.minVersion > instVersion)
-                  continue;
-              }
-              if(transform.maxVersion != null)
-              {
-                if(transform.maxVersion < instVersion)
-                  continue;
-              }
-
-              transforms = transform.URL + ";";
-            }
-          }
-
-          Console.Write("Installing product "+ product.name + "... ");
+          Console.Write("Applying patch "+ patch.name + "... ");
 
           ApplicationDatabase.setProgressHandler(
               new ACM.Sys.Windows.Installer.ProgressHandler(
                 ProgressHandler));
 
           uint ret;
-          ret = ApplicationDatabase.installProduct(URL,
-              (transforms!=""?"TRANSFORMS=" + transforms:""));
+          ret = ApplicationDatabase.applyPatch(patch.URL);
           Console.WriteLine("");
 
           if(ret != 0)
           {
             Console.Error.WriteLine(
-                "Error code {0} returned from installProduct for "
-                + product.name,ret);
+                "Error code {0} returned from applyPatch for "
+                + patch.name,ret);
             Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
           }
         }
@@ -227,9 +170,159 @@ namespace ACM.Wipt
           Console.WriteLine(e.Message);
         }
       }
+      
+    }
+    
+    private static bool Install(string p, bool devel,
+        bool ignoretransforms, bool batch)
+    {
+      try
+      {
+        object obj = Library.GetProduct(p);
+        if(obj == null)
+        {
+          Console.Error.WriteLine("No such product " + p);
+          return false;
+        }
+        else if(obj is Suite)
+        {
+          return InstallSuite((Suite)obj, devel, ignoretransforms, batch);
+        }
+        else if(obj is Patch)
+        {
+          Console.Error.WriteLine(
+              p + " is a patch.  Use the apply command to apply it."
+              );
+          return false;
+        }
+
+        Product product = (Product)obj;
+
+        Version instVersion;
+
+        if(devel)
+          instVersion = product.develVersion;
+        else
+          instVersion = product.stableVersion;
+
+        if(instVersion == null)
+        {
+          Console.Error.WriteLine("Specified version not listed for product "
+              + product.name);
+          return false;
+        }
+
+        string URL = "";
+        Guid productCode = Guid.Empty;
+        if(product.packages != null)
+        {
+          foreach(Package package in product.packages)
+          {
+            if(package.version.major == instVersion.major
+                && package.version.minor == instVersion.minor
+                && package.version.build == instVersion.build)
+            {
+              URL = package.URL;
+              productCode = package.productCode;
+              break;
+            }
+          }
+        }
+        if(URL == "")
+        {
+          Console.Error.WriteLine("No package listed for specified version of "
+              + product.name + ".  Contact the repository maintainer.");
+          return false;
+        }
+
+        InstallState state = ApplicationDatabase.getProductState(productCode);
+        if(state != InstallState.Removed && state != InstallState.Absent 
+            && state != InstallState.Unknown)
+        {
+          Console.Error.WriteLine(product.name + " is already the latest version");
+          return true;
+        }
+
+        foreach(Dependency depend in product.dependencies)
+        {
+          string c = "";
+          if(!batch)
+          {
+            Console.WriteLine(product.name 
+                + " is a dependent on " + depend.productName);
+            Console.WriteLine("\r\nWould you like to install it?");
+            Console.Write("(y or n): ");
+            c = Console.ReadLine();
+            while(c != "y" && c != "Y" && c != "n" && c != "N")
+            {
+              Console.Write("\r\nPlease type 'y' or 'n': ");
+              c = Console.ReadLine();
+            }
+          }
+          if(c == "y" || c == "Y" || batch)
+          {
+            if(!Install(depend.productName, devel, ignoretransforms, batch))
+            {
+              Console.Error.WriteLine("Installation of " + product.name + " aborted.");
+            }
+          }
+          else
+          {
+            return false;
+          }
+        }
+
+        string transforms = "";
+        if(!ignoretransforms && product.transforms != null)
+        {
+          foreach(Transform transform in product.transforms)
+          {
+            if(transform.minVersion != null)
+            {
+              if(transform.minVersion > instVersion)
+                continue;
+            }
+            if(transform.maxVersion != null)
+            {
+              if(transform.maxVersion < instVersion)
+                continue;
+            }
+
+            transforms = transform.URL + ";";
+          }
+        }
+
+        Console.Write("Installing product "+ product.name + "... ");
+
+        ApplicationDatabase.setProgressHandler(
+            new ACM.Sys.Windows.Installer.ProgressHandler(
+              ProgressHandler));
+
+        uint ret;
+        ret = ApplicationDatabase.installProduct(URL,
+            (transforms!=""?"TRANSFORMS=" + transforms:""));
+        Console.WriteLine("");
+
+        if(ret != 0)
+        {
+          Console.Error.WriteLine(
+              "Error code {0} returned from installProduct for "
+              + product.name,ret);
+          Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+          return false;
+
+        }
+
+        return true;
+      }
+      catch(WiptException e)
+      {
+        Console.Error.WriteLine(e.Message);
+        return false;
+      }
     }
 
-    private static void InstallSuite(Suite suite, bool devel,
+    private static bool InstallSuite(Suite suite, bool devel,
         bool ignoretransforms, bool batch)
     {
       string c = "";
@@ -252,8 +345,17 @@ namespace ACM.Wipt
       }
       if(c == "y" || c == "Y" || batch)
       {
-        Install(suite.products, devel, ignoretransforms, batch);
+        bool success = true;
+
+        foreach(string product in suite.products)
+        {
+          success = success && Install(product, devel, ignoretransforms, batch);
+        }
+
+        return success;
       }
+
+      return false;
     }
 
     private static void Remove(string[] packages)
@@ -275,36 +377,28 @@ namespace ACM.Wipt
             RemoveSuite((Suite)obj);
             continue;
           }
-
+          
           Product product = (Product)obj;
-          Guid productCode = 
-            ApplicationDatabase.findProductByUpgradeCode(
-                product.upgradeCode,0);
-          if(productCode != Guid.Empty)
+          
+          if(IsInstalled(product.name))
           {
-            InstallState state = 
-              ApplicationDatabase.getProductState(productCode);
-            if(state != InstallState.Removed 
-                && state != InstallState.Absent 
-                && state != InstallState.Unknown)
+            Console.Write("Removing product "+ product.name + "... ");
+
+            ApplicationDatabase.setProgressHandler(
+                new ACM.Sys.Windows.Installer.ProgressHandler(
+                  ProgressHandler));
+
+            Guid productCode = ApplicationDatabase.findProductByUpgradeCode(
+                product.upgradeCode, 0);
+
+            uint ret = ApplicationDatabase.removeProduct(productCode);
+            Console.WriteLine("");
+            if(ret != 0)
             {
-              Console.Write("Removing product "+ product.name + "... ");
-
-              ApplicationDatabase.setProgressHandler(
-                  new ACM.Sys.Windows.Installer.ProgressHandler(
-                    ProgressHandler));
-
-              uint ret = ApplicationDatabase.removeProduct(productCode);
-              Console.WriteLine("");
-              if(ret != 0)
-              {
-                Console.WriteLine(
-                    "Error code {0} returned from removeProduct",ret);
-                Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
-              }
+              Console.WriteLine(
+                  "Error code {0} returned from removeProduct",ret);
+              Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
             }
-            else
-              Console.WriteLine(p + " is not installed");
           }
           else
             Console.WriteLine(p + " is not installed");
@@ -348,6 +442,7 @@ namespace ACM.Wipt
         --ignore-transforms         Don't apply transforms listed in repository
 
         COMMANDS
+        apply
         install
         remove
         update
@@ -378,10 +473,6 @@ namespace ACM.Wipt
         if(o is Product)
         {
           Product p = (Product)o;
-          if(ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, 0) != Guid.Empty)
-          {
-            Console.WriteLine(p.name + "is installed, bitch!");
-          }
           Console.WriteLine(p.name);
           if(p.stableVersion != null)
           {
@@ -474,10 +565,19 @@ namespace ACM.Wipt
           else if(o is Suite)
           {
             Suite u = (Suite)o;
-            Console.WriteLine(u.name);
+            Console.WriteLine("Suite: " + u.name);
             foreach(string s in u.products)
             {
               Console.WriteLine('\t' + s);
+            }
+          }
+          else if(o is Patch)
+          {
+            Patch a = (Patch)o;
+            Console.WriteLine("Patch: " + a.name);
+            foreach(Guid g in a.productCodes)
+            {
+              Console.WriteLine('\t');
             }
           }
         }
@@ -486,6 +586,100 @@ namespace ACM.Wipt
       {
         Console.WriteLine(e.Message);
       }
+    }
+
+    private static bool IsInstalled(string product)
+    {
+      Object obj = Library.GetProduct(product);
+
+      if(obj == null)
+      {
+        return false;
+      }
+
+      if(obj is Patch)
+      {
+        return false;
+      }
+      else if(obj is Suite)
+      {
+        Suite s = (Suite)obj;
+        bool installed = true;
+        foreach(string prod in s.products)
+        {
+          installed = installed && IsInstalled(prod);
+        }
+        return installed;
+      }
+      else if(obj is Product)
+      {
+        Product p = (Product)obj;
+
+        Guid productCode = 
+          ApplicationDatabase.findProductByUpgradeCode(
+              p.upgradeCode, 0);
+        if(productCode == Guid.Empty)        
+        {
+          return false;
+        }
+
+        InstallState state = 
+          ApplicationDatabase.getProductState(productCode);
+        if(state ==  InstallState.Removed 
+            || state == InstallState.Absent 
+            || state == InstallState.Unknown)
+        {
+          return false;
+        }
+
+        return true;
+      }
+
+      return false;
+    }
+
+    private static bool IsInstalled(string product, Version minVersion, Version maxVersion)
+    {
+      Object obj = Library.GetProduct(product);
+      if(obj == null)
+      {
+        return false;
+      }
+
+      if(!(obj is Product))
+      {
+        return false;
+      }
+
+      Product p = (Product)obj;
+
+      Guid productCode = 
+        ApplicationDatabase.findProductByUpgradeCode(
+            p.upgradeCode,0);
+      if(productCode == Guid.Empty)        
+      {
+        return false;
+      }
+
+      InstallState state = 
+        ApplicationDatabase.getProductState(productCode);
+      if(state == InstallState.Removed 
+          || state == InstallState.Absent 
+          || state == InstallState.Unknown)
+      {
+        return false; 
+      }
+
+      string[] ver = new string[3];
+      ver = ApplicationDatabase.getInstalledVersion(productCode).Split('.');
+      
+      Version v = new Version(ver[0], ver[1], ver[2]);
+      if(v < minVersion || v > maxVersion)
+      {
+        return false;
+      }
+
+      return true;
     }
 
     private static int index = 0;

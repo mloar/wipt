@@ -61,6 +61,7 @@ namespace ACM
             static String* getInstalledVersion(Guid productCode);
             static InstallUILevel setInternalUI(InstallUILevel newLevel);
             static void setProgressHandler(ProgressHandler* handler);				
+            static unsigned int applyPatch(String* sourcePath);
             static unsigned int installProduct(String* sourcePath, String* commandLine);
             static unsigned int advertiseProduct(String* sourcePath, String* transforms, LANGID language);
             static unsigned int removeProduct(Guid productCode);

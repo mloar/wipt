@@ -83,7 +83,7 @@ namespace ACM.Wipt
       /// <summary>The constructor for the Transform class.</summary>
       public Transform() {}
     }
-  
+
   /// <remarks>
   /// The Version object represents a Major.Minor.Build version string.
   /// </remarks>
@@ -106,15 +106,21 @@ namespace ACM.Wipt
           minor = Minor;
           build = Build;
       }
+      /// <returns>A dotted version string.</returns>
       public override string ToString()
       {
         return string.Format("{0}.{1}.{2}",major,minor,build);
       }
+      /// <summary>Determines whether a version is less than another.</summary>
+      /// <param name="v1">First version.</param>
+      /// <param name="v2">Second version.</param>
       public static bool operator <(Version v1, Version v2)
       {
         return v1.major.CompareTo(v2.major) < 0 || ((v1.major.CompareTo(v2.major) < 0) && v1.minor.CompareTo(v2.major) < 0)
             || ((v1.major.CompareTo(v2.major) < 0) && (v1.minor.CompareTo(v2.minor) < 0) && (v1.build.CompareTo(v2.build) < 0));
       }
+      /// <summary>Determines whether versions are equal.</summary>
+      /// <param name="o">Object for comparison.</param>
       public override bool Equals(object o)
       {
         if(!(o is Version))
@@ -125,6 +131,9 @@ namespace ACM.Wipt
         Version v = (Version)o;
         return (major == v.major) && (minor == v.minor) && (build == v.build);
       }
+      /// <summary>Determines whether a version is greater than another.</summary>
+      /// <param name="v1">First version.</param>
+      /// <param name="v2">Second version.</param>
       public static bool operator >(Version v1, Version v2)
       {
         return !((v1 < v2) || (v1 == v2));
@@ -137,13 +146,43 @@ namespace ACM.Wipt
   [Serializable()]
     public class Dependency
     {
+      /// <summary>The name of the product depended on.</summary>
       public string productName;
+      /// <summary>The lowest version of the product supported.</summary>
       public Version minVersion;
+      /// <summary>The highest version of the product supported.</summary>
       public Version maxVersion;
 
+      /// <summary>The constructor for the Dependency class.</summary>
+      /// <param name="ProductName">
+      /// The name of the product depended on.
+      /// </param>
       public Dependency(string ProductName)
       {
         productName = ProductName;
+      }
+    }
+
+  /// <remarks>
+  /// The Patch class represents a patch.
+  /// </remarks>
+  [Serializable()]
+    public class Patch
+    {
+      /// <summary>The patch's name.</summary>
+      public string name;
+      /// <summary>
+      /// The product codes of products covered by this patch.
+      /// </summary>
+      public Guid[] productCodes;
+      /// <summary>The URL of the patch.</summary>
+      public string URL;
+
+      /// <summary>The constructor for the Patch class.</summary>
+      /// <param name="PatchName">The name of the patch.</param>
+      public Patch(string PatchName)
+      {
+        name = PatchName;
       }
     }
 
@@ -168,6 +207,8 @@ namespace ACM.Wipt
       public Version develVersion;
       /// <summary>An array of Dependency objects this product depends on.</summary>
       public Dependency[] dependencies;
+      /// <summary>An array of Dependency objects that depend on this product.</summary>
+      public Dependency[] dependents;
       /// <summary>An array of transforms for this product.</summary>
       public Transform[] transforms;
 
@@ -572,7 +613,37 @@ namespace ACM.Wipt
                 array[j++] = product.InnerText;
               }
 
-              library.Add(curNode.GetAttribute("Name").ToLower(), new Suite(curNode.GetAttribute("Name"),array));
+              library.Add(curNode.GetAttribute("Name").ToLower(), new Suite(curNode.GetAttribute("Name"), array));
+            }
+            else if(curNode.Name == "Patch")
+            {
+              Patch p = new Patch(curNode.GetAttribute("Name"));
+
+              foreach(XmlElement e in curNode.ChildNodes)
+              {
+                if(e.Name == "ProductCode")
+                {
+                    if(p.productCodes == null)
+                    {
+                      p.productCodes = new Guid[1];
+                      p.productCodes[0] = new Guid(e.InnerText);
+                    }
+                    else
+                    {
+                      Guid[] nd = new Guid[p.productCodes.Length + 1];
+                      Array.Copy(p.productCodes, nd, p.productCodes.Length);
+                      nd[p.productCodes.Length] = new Guid(e.InnerText);
+                      p.productCodes = nd;
+                    }
+                }
+                else if(e.Name == "URL")
+                {
+                  p.URL = e.InnerText;
+                }
+              }
+
+              library.Add(curNode.GetAttribute("Name").ToLower(), p);
+
             }
           }
         }
@@ -582,13 +653,13 @@ namespace ACM.Wipt
     }
 
     /// <summary>
-    /// Retrieve a Product or suite object from the Library.
+    /// Retrieve a Product, Suite, or Patch object from the Library.
     /// </summary>
     /// <param name="name">
-    /// The name of the product or suite (case-insensitive).
+    /// The name of the product, suite, or patch (case-insensitive).
     /// </param>
     /// <returns>
-    /// A Product or Suite object or null if not found.
+    /// A Product, Suite, or Patch object or null if not found.
     /// </returns>
     public static object GetProduct(string name)
     {
