@@ -146,20 +146,20 @@ namespace ACM.Wipt
   [Serializable()]
     public class Dependency
     {
-      /// <summary>The name of the product depended on.</summary>
-      public string productName;
+      /// <summary>The upgradecode of the product depended on.</summary>
+      public Guid upgradeCode;
       /// <summary>The lowest version of the product supported.</summary>
       public Version minVersion;
       /// <summary>The highest version of the product supported.</summary>
       public Version maxVersion;
 
       /// <summary>The constructor for the Dependency class.</summary>
-      /// <param name="ProductName">
-      /// The name of the product depended on.
+      /// <param name="UpgradeCode">
+      /// The upgrade code of the product depended on.
       /// </param>
-      public Dependency(string ProductName)
+      public Dependency(Guid UpgradeCode)
       {
-        productName = ProductName;
+        upgradeCode = UpgradeCode;
       }
     }
 
@@ -197,14 +197,16 @@ namespace ACM.Wipt
       public Guid upgradeCode;
       /// <summary>The name of the product.</summary>
       public string name;
+      /// <summary>The publisher of the product.</summary>
+      public string publisher;
+      /// <summary>The support URL for the product.</summary>
+      public string supportURL;
+      /// <summary>A description of the product.</summary>
+      public string description;
       /// <summary>A array of packages for this product.</summary>
       public Package[] packages;
       /// <summary>A Version object for the product's release version.</summary>
       public Version stableVersion;
-      /// <summary>
-      /// A Version object for the product's development version.
-      /// </summary> 
-      public Version develVersion;
       /// <summary>An array of Dependency objects this product depends on.</summary>
       public Dependency[] dependencies;
       /// <summary>An array of Dependency objects that depend on this product.</summary>
@@ -214,9 +216,15 @@ namespace ACM.Wipt
 
       /// <summary>The constructor for the Product class.</summary>
       /// <param name="Name">The name of the Product.</param>
-      public Product(string Name)
+      /// <param name="Publisher">The publisher of the product.</param>
+      /// <param name="SupportURL">A support URL for the product.</param>
+      /// <param name="Description">A description of the product.</param>
+      public Product(string Name, string Publisher, string SupportURL, string Description)
       {
         name = Name;
+        publisher = Publisher;
+        supportURL = SupportURL;
+        description = Description;
       }
     }
 
@@ -440,13 +448,17 @@ namespace ACM.Wipt
     private static bool Update(string URL)
     {
       WebRequest req = WebRequest.Create(new Uri(URL));
+      Stream i;
 
-      // TODO: Make it handle other protocols
-      HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
-      if(resp.StatusCode != HttpStatusCode.OK)
+      try
+      {
+        i = req.GetResponse().GetResponseStream();
+      }
+      catch(System.Net.WebException)
+      {
         return false;
-
-      Stream i = resp.GetResponseStream();
+      }
+      
       XmlDocument repository = LoadRepository(i);
       i.Close();
 
@@ -472,7 +484,7 @@ namespace ACM.Wipt
               }
               else
               {
-                p = new Product(curNode.GetAttribute("Name"));
+                p = new Product(curNode.GetAttribute("Name"), curNode.GetAttribute("Publisher"), curNode.GetAttribute("SupportURL"), curNode.GetAttribute("Description"));
                 p.upgradeCode = new Guid(curNode.GetAttribute("UpgradeCode"));
                 library.Add(curNode.GetAttribute("Name").ToLower(), p);
               }
@@ -481,8 +493,6 @@ namespace ACM.Wipt
               {
                 switch(e.Name)
                 {
-                  case "Publisher":
-                    break;
                   case "StableVersion":
                     p.stableVersion = new Version(
                         e.GetAttribute("Major"),
@@ -490,15 +500,8 @@ namespace ACM.Wipt
                         e.GetAttribute("Build")
                         );
                     break;
-                  case "DevelVersion":
-                    p.develVersion = new Version(
-                        e.GetAttribute("Major"),
-                        e.GetAttribute("Minor"),
-                        e.GetAttribute("Build")
-                        );
-                    break;
                   case "Dependency":
-                    Dependency d = new Dependency(e.GetAttribute("ProductName"));
+                    Dependency d = new Dependency(new Guid(e.GetAttribute("UpgradeCode")));
                     if(p.dependencies == null)
                     {
                       p.dependencies = new Dependency[1];
