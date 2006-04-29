@@ -438,9 +438,9 @@ namespace ACM
           return ret;
         }
 
-        Guid ApplicationDatabase::GetPackageUpgradeCode(String* path)
+        String* ApplicationDatabase::GetPackageProperty(String* path, String* property)
         {
-          return Guid::Empty;
+          return NULL;
         }
       }
     }
