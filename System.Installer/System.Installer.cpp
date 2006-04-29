@@ -431,8 +431,8 @@ namespace ACM
           String* ret;
           TCHAR buffer[1024];
 
-          va_list crap;
-          FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,0,code,0,buffer,1024,&crap);
+          va_list args;
+          FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,0,code,0,buffer,1024,&args);
 
           ret	= Marshal::PtrToStringUni(buffer);
           return ret;
