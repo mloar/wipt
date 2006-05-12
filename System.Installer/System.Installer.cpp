@@ -32,7 +32,7 @@
  *  DEALINGS WITH THE SOFTWARE.
  */
 
-// This	is the main	DLL	file.
+// This  is the main  DLL  file.
 
 #include "stdafx.h"
 #include "System.Installer.h"
@@ -86,19 +86,19 @@ namespace ACM
         }
 
         //
-        //	FUNCTION: ParseProgressString(LPSTR	sz)
+        //  FUNCTION: ParseProgressString(LPSTR  sz)
         //
-        //	PURPOSE:  Parses the progress data message sent	to the INSTALLUI_HANDLER callback
+        //  PURPOSE:  Parses the progress data message sent  to the INSTALLUI_HANDLER callback
         //
-        //	COMMENTS: Assumes correct syntax.
+        //  COMMENTS: Assumes correct syntax.
         //
         BOOL ParseProgressString(LPTSTR sz)
         {
-          TCHAR *pch =	sz;
+          TCHAR *pch =  sz;
           if (0 == *pch)
-            return FALSE; // no	msg
+            return FALSE; // no  msg
 
-          while (*pch	!= 0)
+          while (*pch  != 0)
           {
             TCHAR chField = *pch++;
             pch++; // for ':'
@@ -107,52 +107,52 @@ namespace ACM
             {
               case '1': // field 1
                 {
-                  // progress	message	type
+                  // progress  message  type
                   if (0 == isdigit(*pch))
                     return FALSE; // blank record
-                  iField[0] =	*pch++ - '0';
+                  iField[0] =  *pch++ - '0';
                   break;
                 }
               case '2': // field 2
                 {
-                  iField[1] =	FGetInteger(pch);
-                  if (iField[0] == 2 || iField[0]	== 3)
-                    return TRUE; //	done processing
+                  iField[1] =  FGetInteger(pch);
+                  if (iField[0] == 2 || iField[0]  == 3)
+                    return TRUE; //  done processing
                   break;
                 }
               case '3': // field 3
                 {
-                  iField[2] =	FGetInteger(pch);
+                  iField[2] =  FGetInteger(pch);
                   if (iField[0] == 1)
-                    return TRUE; //	done processing
+                    return TRUE; //  done processing
                   break;
                 }
               case '4': // field 4
                 {
-                  iField[3] =	FGetInteger(pch);
-                  return TRUE; //	done processing
+                  iField[3] =  FGetInteger(pch);
+                  return TRUE; //  done processing
                 }
-              default: //	unknown	field
+              default: //  unknown  field
                 {
                   return FALSE;
                 }
             }
-            pch++; // for space	(' ') between fields
+            pch++; // for space  (' ') between fields
           }
 
           return TRUE;
         }
 
 
-        Guid ApplicationDatabase::findProductByUpgradeCode(Guid	upgradeCode, int index)
+        Guid ApplicationDatabase::findProductByUpgradeCode(Guid  upgradeCode, int index)
         {
-          LPCWSTR	code = 0;
-          LPWSTR buffer =	0;
-          String*	ret;
+          LPCWSTR  code = 0;
+          LPWSTR buffer =  0;
+          String*  ret;
 
           try
           {
-            String*	temp = String::Concat("{",upgradeCode.ToString()->ToUpper());
+            String*  temp = String::Concat("{",upgradeCode.ToString()->ToUpper());
             temp = String::Concat(temp,"}");
             code = static_cast<LPCWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
           }
@@ -168,25 +168,92 @@ namespace ACM
           buffer = static_cast<LPWSTR>(static_cast<void*>(Marshal::AllocHGlobal(39 * sizeof(wchar_t))));
 
           unsigned int thecode;
-          if((thecode=MsiEnumRelatedProducts(code, 0,	index, buffer))	!= ERROR_SUCCESS)
+          if((thecode=MsiEnumRelatedProducts(code, 0,  index, buffer))  != ERROR_SUCCESS)
             return Guid::Empty;
 
-          ret	= Marshal::PtrToStringUni(buffer);
+          ret  = Marshal::PtrToStringUni(buffer);
 
           Marshal::FreeHGlobal(buffer);
 
           return ret;
         }
 
-        String* ApplicationDatabase::getInstalledVersion(Guid productCode)
+        Guid ApplicationDatabase::getInstalledPatches(Guid productCode, int index)
         {
-          LPWSTR	code = 0;
-          LPWSTR buffer =	0;
-          String*	ret;
+          LPCWSTR  code = 0;
+          LPWSTR buffer =  0;
+          LPWSTR buffer2 = 0;
+          String*  ret;
 
           try
           {
-            String*	temp = String::Concat("{",productCode.ToString()->ToUpper());
+            String*  temp = String::Concat("{", productCode.ToString()->ToUpper());
+            temp = String::Concat(temp,"}");
+            code = static_cast<LPCWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
+          }
+          catch(ArgumentException*)
+          {
+            return Guid::Empty;
+          }
+          catch (OutOfMemoryException*)
+          {
+            return Guid::Empty;
+          }
+
+          buffer = static_cast<LPWSTR>(static_cast<void*>(Marshal::AllocHGlobal(39 * sizeof(wchar_t))));
+          if(buffer == NULL)
+          {
+            return Guid::Empty;
+          }
+
+          buffer2 = static_cast<LPWSTR>(static_cast<void*>(Marshal::AllocHGlobal(1024 * sizeof(wchar_t))));
+          if(buffer2 == NULL)
+          {
+            Marshal::FreeHGlobal(buffer);
+            return Guid::Empty;
+          }
+
+          unsigned int thecode;
+          DWORD bufferlen = 1024;
+retry:
+          if((thecode = MsiEnumPatches(code, index, buffer, buffer2, &bufferlen))  != ERROR_SUCCESS)
+          {
+            if(thecode == ERROR_MORE_DATA)
+            {
+              Marshal::FreeHGlobal(buffer2);
+              buffer2 = static_cast<LPWSTR>(static_cast<void*>(Marshal::AllocHGlobal((bufferlen + 1) * sizeof(wchar_t))));
+              if(buffer2 == NULL)
+              {
+                Marshal::FreeHGlobal(buffer);
+                return Guid::Empty;
+              }
+              goto retry;
+            }
+            else
+            {
+              Marshal::FreeHGlobal(buffer2);
+              Marshal::FreeHGlobal(buffer);
+              return Guid::Empty;
+            }
+          }
+
+          ret  = Marshal::PtrToStringUni(buffer);
+
+          Marshal::FreeHGlobal(buffer);
+          Marshal::FreeHGlobal(buffer2);
+
+          return ret;
+        }
+
+        String* ApplicationDatabase::getInstalledVersion(Guid productCode)
+        {
+          LPWSTR  code = 0;
+          LPWSTR buffer =  0;
+          String*  ret;
+
+          try
+          {
+            String*  temp = String::Concat("{",productCode.ToString()->ToUpper());
             temp = String::Concat(temp,"}");
             code = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
           }
@@ -205,7 +272,41 @@ namespace ACM
           if(MsiGetProductInfo(code, INSTALLPROPERTY_VERSIONSTRING, buffer, &ccb) != ERROR_SUCCESS)
             return NULL;
 
-          ret	= Marshal::PtrToStringUni(buffer);
+          ret  = Marshal::PtrToStringUni(buffer);
+          Marshal::FreeHGlobal(buffer);
+          Marshal::FreeHGlobal(code);
+
+          return ret;
+        }
+
+        String* ApplicationDatabase::getPatchName(Guid patchCode)
+        {
+          LPWSTR  code = 0;
+          LPWSTR buffer =  0;
+          String*  ret;
+
+          try
+          {
+            String*  temp = String::Concat("{",productCode.ToString()->ToUpper());
+            temp = String::Concat(temp,"}");
+            code = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
+          }
+          catch(ArgumentException*)
+          {
+            return NULL;
+          }
+          catch (OutOfMemoryException*)
+          {
+            return NULL;
+          }
+
+          buffer = static_cast<LPWSTR>(static_cast<void*>(Marshal::AllocHGlobal(1024 * sizeof(wchar_t))));
+          DWORD ccb = 1024 * sizeof(wchar_t);
+
+          if(MsiGetProductInfo(code, INSTALLPROPERTY_VERSIONSTRING, buffer, &ccb) != ERROR_SUCCESS)
+            return NULL;
+
+          ret  = Marshal::PtrToStringUni(buffer);
           Marshal::FreeHGlobal(buffer);
           Marshal::FreeHGlobal(code);
 
@@ -214,7 +315,7 @@ namespace ACM
 
         InstallUILevel ApplicationDatabase::setInternalUI(InstallUILevel newLevel)
         {
-          return (InstallUILevel)	MsiSetInternalUI((INSTALLUILEVEL)newLevel, NULL);
+          return (InstallUILevel)  MsiSetInternalUI((INSTALLUILEVEL)newLevel, NULL);
         }
 
         void ApplicationDatabase::setProgressHandler(ProgressHandler* handler)
@@ -304,7 +405,7 @@ namespace ACM
         }
 
         int __stdcall ApplicationDatabase::Callbacks::ExternalUIHandler(LPVOID pvContext, UINT iMessageType, LPCTSTR message)
-        {	
+        {  
           ApplicationDatabase::ExecuteHandler(iMessageType,message);
           return 0;
         }
@@ -329,6 +430,34 @@ namespace ACM
           Marshal::FreeHGlobal(path);
           return ret;
         }
+
+        unsigned int ApplicationDatabase::applyPatch(String* sourcePath, System::Guid productCode)
+        {
+          LPWSTR code = 0;
+          LPWSTR path = 0;
+
+          try
+          {
+            path = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(sourcePath)));
+            String*  temp = String::Concat(/*" /x {"*/"{",productCode.ToString()->ToUpper());
+            temp = String::Concat(temp,/*"} /qn"*/ "}");
+            code = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
+          }
+          catch(ArgumentException*)
+          {
+            return ERROR_INVALID_PARAMETER;
+          }
+          catch (OutOfMemoryException*)
+          {
+            return ERROR_NOT_ENOUGH_MEMORY;
+          }
+          setInternalUI(None);
+          unsigned int ret = MsiApplyPatch(path, code, INSTALLTYPE_SINGLE_INSTANCE, L"REINSTALL=ALL");
+          Marshal::FreeHGlobal(path);
+          Marshal::FreeHGlobal(code);
+          return ret;
+        }
+
         unsigned int ApplicationDatabase::installProduct(String* sourcePath, String* commandLine)
         {
           LPWSTR path = 0, line = 0;
@@ -358,7 +487,7 @@ namespace ACM
           try
           {
             path = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(sourcePath)));
-            trans =	static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(transforms)));
+            trans =  static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(transforms)));
           }
           catch(ArgumentException*)
           {
@@ -380,7 +509,7 @@ namespace ACM
 
           try
           {
-            String*	temp = String::Concat(/*" /x {"*/"{",productCode.ToString()->ToUpper());
+            String*  temp = String::Concat(/*" /x {"*/"{",productCode.ToString()->ToUpper());
             temp = String::Concat(temp,/*"} /qn"*/ "}");
             code = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
           }
@@ -405,7 +534,7 @@ namespace ACM
 
           try
           {
-            String*	temp = String::Concat("{",productCode.ToString()->ToUpper());
+            String*  temp = String::Concat("{",productCode.ToString()->ToUpper());
             temp = String::Concat(temp,"}");
             code = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
           }
@@ -434,7 +563,7 @@ namespace ACM
           va_list args;
           FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,0,code,0,buffer,1024,&args);
 
-          ret	= Marshal::PtrToStringUni(buffer);
+          ret = Marshal::PtrToStringUni(buffer);
           return ret;
         }
 

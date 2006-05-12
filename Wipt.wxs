@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
 	<Product Id="D17A2FAA-D2FB-4dde-A144-A645EAC14543" UpgradeCode="C1781722-8046-4A2A-8419-5CBC9616220C"
-		Name="Wipt" Language="1033" Version="1.0.2" Manufacturer="ACM@UIUC">
+		Name="Wipt" Language="1033" Version="1.0.3" Manufacturer="ACM@UIUC">
 		<Package Id="????????-????-????-????-????????????" Description="Windows Installer Package Tool" Comments="Copyright (c) 2006 ACM@UIUC.  See the LICENSE file for copying details."
 			InstallerVersion="200" Compressed="yes" />
 		<Binary Id="MSVBDPCADLL" src="InstallUtil\MSVBDPCADLL.ibd" />

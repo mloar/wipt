@@ -58,10 +58,13 @@ namespace ACM
         {
           public:
             static Guid findProductByUpgradeCode(Guid upgradeCode, int index);
+            static Guid getInstalledPatches(Guid productCode, int index);
             static String* getInstalledVersion(Guid productCode);
+            static String* getPatchName(Guid patchCode);
             static InstallUILevel setInternalUI(InstallUILevel newLevel);
             static void setProgressHandler(ProgressHandler* handler);				
             static unsigned int applyPatch(String* sourcePath);
+            static unsigned int applyPatch(String* sourcePath, Guid productCode);
             static unsigned int installProduct(String* sourcePath, String* commandLine);
             static unsigned int advertiseProduct(String* sourcePath, String* transforms, LANGID language);
             static unsigned int removeProduct(Guid productCode);

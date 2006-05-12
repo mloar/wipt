@@ -53,6 +53,10 @@ namespace ACM.Wipt
       public Version version;
       /// <summary>The URL of the package.</summary>
       public string URL;
+      /// <summary>The URLs of transforms for the package.</summary>
+      public string[] transforms;
+      /// <summary>Patches for the package.</summary>
+      public Patch[] patches;
       /// <summary>The constructor for the Package class.</summary>
       /// <param name="ProductCode">
       /// The ProductCode of the Package.  Format-agnostic, but must be
@@ -64,7 +68,7 @@ namespace ACM.Wipt
       }
     }
 
-  /// <remarks>A Transform represents an MST file.</remarks>
+  /*/// <remarks>A Transform represents an MST file.</remarks>
   [Serializable()]
     public class Transform
     {
@@ -83,7 +87,7 @@ namespace ACM.Wipt
       /// <summary>The constructor for the Transform class.</summary>
       public Transform() {}
     }
-
+  */
   /// <remarks>
   /// The Version object represents a Major.Minor.Build version string.
   /// </remarks>
@@ -139,7 +143,7 @@ namespace ACM.Wipt
         return !((v1 < v2) || (v1 == v2));
       }
     }
-
+  /*
   /// <remarks>
   /// The Dependency class represents a dependency.
   /// </remarks>
@@ -162,27 +166,23 @@ namespace ACM.Wipt
         upgradeCode = UpgradeCode;
       }
     }
-
+  */
   /// <remarks>
   /// The Patch class represents a patch.
   /// </remarks>
   [Serializable()]
     public class Patch
     {
-      /// <summary>The patch's name.</summary>
-      public string name;
-      /// <summary>
-      /// The product codes of products covered by this patch.
-      /// </summary>
-      public Guid[] productCodes;
+      /// <summary>The PatchCode.</summary>
+      public Guid patchCode;
       /// <summary>The URL of the patch.</summary>
       public string URL;
 
       /// <summary>The constructor for the Patch class.</summary>
-      /// <param name="PatchName">The name of the patch.</param>
-      public Patch(string PatchName)
+      /// <param name="PatchCode">The PatchCode.</param>
+      public Patch(Guid PatchCode)
       {
-        name = PatchName;
+        patchCode = PatchCode;
       }
     }
 
@@ -207,24 +207,22 @@ namespace ACM.Wipt
       public Package[] packages;
       /// <summary>A Version object for the product's release version.</summary>
       public Version stableVersion;
-      /// <summary>An array of Dependency objects this product depends on.</summary>
+      /*/// <summary>An array of Dependency objects this product depends on.</summary>
       public Dependency[] dependencies;
       /// <summary>An array of Dependency objects that depend on this product.</summary>
       public Dependency[] dependents;
       /// <summary>An array of transforms for this product.</summary>
-      public Transform[] transforms;
+      public Transform[] transforms;*/
 
       /// <summary>The constructor for the Product class.</summary>
       /// <param name="Name">The name of the Product.</param>
       /// <param name="Publisher">The publisher of the product.</param>
       /// <param name="SupportURL">A support URL for the product.</param>
-      /// <param name="Description">A description of the product.</param>
-      public Product(string Name, string Publisher, string SupportURL, string Description)
+      public Product(string Name, string Publisher, string SupportURL)
       {
         name = Name;
         publisher = Publisher;
         supportURL = SupportURL;
-        description = Description;
       }
     }
 
@@ -453,90 +451,89 @@ namespace ACM.Wipt
       try
       {
         i = req.GetResponse().GetResponseStream();
-      }
-      catch(System.Net.WebException)
-      {
-        return false;
-      }
-      
-      XmlDocument repository = LoadRepository(i);
-      i.Close();
 
-      foreach(XmlLinkedNode FirstLevel in repository.ChildNodes)
-      {
-        if(FirstLevel.Name == "Repository")
+        XmlDocument repository = LoadRepository(i);
+        i.Close();
+
+        foreach(XmlLinkedNode FirstLevel in repository.ChildNodes)
         {
-          foreach(XmlElement curNode in FirstLevel.ChildNodes)
+          if(FirstLevel.Name == "Repository")
           {
-            if(curNode.Name == "Product")
+            foreach(XmlElement curNode in FirstLevel.ChildNodes)
             {
-              Product p;
-
-              if(library.ContainsKey(curNode.GetAttribute("Name")))
+              if(curNode.Name == "Product")
               {
-                p = (Product)library[curNode.GetAttribute("Name")];
-                if(p.upgradeCode != 
-                    new Guid(curNode.GetAttribute("UpgradeCode")))
+                Product p;
+
+                if(library.ContainsKey(curNode.GetAttribute("Name")))
                 {
-                  throw new WiptException("Product name collision on "
-                      + p.name);
+                  p = (Product)library[curNode.GetAttribute("Name")];
+                  if(p.upgradeCode != 
+                      new Guid(curNode.GetAttribute("UpgradeCode")))
+                  {
+                    throw new WiptException("Product name collision on "
+                        + p.name);
+                  }
                 }
-              }
-              else
-              {
-                p = new Product(curNode.GetAttribute("Name"), curNode.GetAttribute("Publisher"), curNode.GetAttribute("SupportURL"), curNode.GetAttribute("Description"));
-                p.upgradeCode = new Guid(curNode.GetAttribute("UpgradeCode"));
-                library.Add(curNode.GetAttribute("Name").ToLower(), p);
-              }
-
-              foreach(XmlElement e in curNode.ChildNodes)
-              {
-                switch(e.Name)
+                else
                 {
-                  case "StableVersion":
-                    p.stableVersion = new Version(
-                        e.GetAttribute("Major"),
-                        e.GetAttribute("Minor"),
-                        e.GetAttribute("Build")
-                        );
+                  p = new Product(curNode.GetAttribute("Name"), curNode.GetAttribute("Publisher"), curNode.GetAttribute("SupportURL"));
+                  p.upgradeCode = new Guid(curNode.GetAttribute("UpgradeCode"));
+                  library.Add(curNode.GetAttribute("Name").ToLower(), p);
+                }
+
+                foreach(XmlElement e in curNode.ChildNodes)
+                {
+                  switch(e.Name)
+                  {
+                    case "StableVersion":
+                      p.stableVersion = new Version(
+                          e.GetAttribute("Major"),
+                          e.GetAttribute("Minor"),
+                          e.GetAttribute("Build")
+                          );
                     break;
-                  case "Dependency":
-                    Dependency d = new Dependency(new Guid(e.GetAttribute("UpgradeCode")));
-                    if(p.dependencies == null)
-                    {
+                    /*case "Dependency":
+                      Dependency d = new Dependency(new Guid(e.GetAttribute("UpgradeCode")));
+                      if(p.dependencies == null)
+                      {
                       p.dependencies = new Dependency[1];
                       p.dependencies[0] = d;
-                    }
-                    else
-                    {
+                      }
+                      else
+                      {
                       Dependency[] nd = new Dependency[p.dependencies.Length + 1];
                       Array.Copy(p.dependencies, nd, p.dependencies.Length);
                       nd[p.dependencies.Length] = d;
                       p.dependencies = nd;
-                    }
-                    foreach(XmlElement t in e.ChildNodes)
-                    {
+                      }
+                      foreach(XmlElement t in e.ChildNodes)
+                      {
                       switch(t.Name)
                       {
-                        case "MinVersion":
-                          d.minVersion = new Version(
-                              t.GetAttribute("Major"),
-                              t.GetAttribute("Minor"),
-                              t.GetAttribute("Build")
-                              );
-                        break;
-                        case "MaxVersion":
-                          d.maxVersion = new Version(
-                              t.GetAttribute("Major"),
-                              t.GetAttribute("Minor"),
-                              t.GetAttribute("Build")
-                              );
-                        break;
+                      case "MinVersion":
+                      d.minVersion = new Version(
+                      t.GetAttribute("Major"),
+                      t.GetAttribute("Minor"),
+                      t.GetAttribute("Build")
+                      );
+                      break;
+                      case "MaxVersion":
+                      d.maxVersion = new Version(
+                      t.GetAttribute("Major"),
+                      t.GetAttribute("Minor"),
+                      t.GetAttribute("Build")
+                      );
+                      break;
                       }
-                    }
+                      }
+                      break;
+                     */
+                    case "Description":
+                      p.description = e.InnerText;
                     break;
-                  case "Package":
-                    Package a = new Package(e.GetAttribute("ProductCode"));
+                    case "Package":
+                      Package a = new Package(e.GetAttribute("ProductCode"));
                     if(p.packages == null)
                     {
                       p.packages = new Package[1];
@@ -549,107 +546,89 @@ namespace ACM.Wipt
                       np[p.packages.Length] = a;
                       p.packages = np;
                     }
-                    foreach(XmlElement t in e.ChildNodes)
+                    foreach(XmlNode y in e.ChildNodes)
                     {
-                      switch(t.Name)
+                      if(y is XmlElement)
                       {
-                        case "Version":
-                          a.version = new Version(
-                              t.GetAttribute("Major"),
-                              t.GetAttribute("Minor"),
-                              t.GetAttribute("Build")
-                              );
-                        break;
-                        case "URL":
-                          a.URL = t.InnerText;
-                        break;
+                        XmlElement t = (XmlElement)y;
+
+                        switch(t.Name)
+                        {
+                          case "Version":
+                            a.version = new Version(
+                                t.GetAttribute("Major"),
+                                t.GetAttribute("Minor"),
+                                t.GetAttribute("Build")
+                                );
+                          break;
+                          case "URL":
+                            a.URL = t.InnerText;
+                          break;
+                          case "TransformURL":
+                            if(a.transforms == null)
+                            {
+                              a.transforms = new string[1];
+                              a.transforms[0] = t.InnerText;
+                            }
+                            else
+                            {
+                              string[] nm = new string[a.transforms.Length + 1];
+                              Array.Copy(a.transforms, nm, a.transforms.Length);
+                              nm[a.transforms.Length] = t.InnerText;
+                              a.transforms = nm;
+                            }
+                          break;
+                          case "Patch":
+                            Patch g = new Patch(new Guid(t.GetAttribute("PatchCode")));
+                          foreach(XmlElement v in t.ChildNodes)
+                          {
+                            if(v.Name == "URL")
+                            {
+                              g.URL = v.InnerText;
+                            }
+                          }
+                          if(a.patches == null)
+                          {
+                            a.patches = new Patch[1];
+                            a.patches[0] = g;
+                          }
+                          else
+                          {
+                            Patch[] nm = new Patch[a.patches.Length + 1];
+                            Array.Copy(a.patches, nm, a.patches.Length);
+                            nm[a.patches.Length] = g;
+                            a.patches = nm;
+                          }
+                          break;
+                        }
                       }
                     }
                     break;
-                  case "Transform":
-                    Transform q = new Transform();
-                    if(p.transforms == null)
-                    {
-                      p.transforms = new Transform[1];
-                      p.transforms[0] = q;
-                    }
-                    else
-                    {
-                      Transform[] nm = new Transform[p.transforms.Length + 1];
-                      Array.Copy(p.transforms, nm, p.transforms.Length);
-                      nm[p.transforms.Length] = q;
-                      p.transforms = nm;
-                    }
-                    foreach(XmlElement t in e.ChildNodes)
-                    {
-                      switch(t.Name)
-                      {
-                        case "MinVersion":
-                          q.minVersion = new Version(
-                            t.GetAttribute("Major"),
-                            t.GetAttribute("Minor"),
-                            t.GetAttribute("Build")
-                            );
-                        break;
-                        case "MaxVersion":
-                          q.maxVersion = new Version(
-                            t.GetAttribute("Major"),
-                            t.GetAttribute("Minor"),
-                            t.GetAttribute("Build")
-                            );
-                        break;
-                        case "URL":
-                          q.URL = t.InnerText;
-                        break;
-                      }
-                    }
-                    break;
+                  }
                 }
               }
-            }
-            else if(curNode.Name == "Suite")
-            {
-              string[] array = new string[curNode.ChildNodes.Count];
-              int j = 0;
-              foreach(XmlElement product in curNode.ChildNodes)
+              else if(curNode.Name == "Suite")
               {
-                array[j++] = product.InnerText;
-              }
-
-              library.Add(curNode.GetAttribute("Name").ToLower(), new Suite(curNode.GetAttribute("Name"), array));
-            }
-            else if(curNode.Name == "Patch")
-            {
-              Patch p = new Patch(curNode.GetAttribute("Name"));
-
-              foreach(XmlElement e in curNode.ChildNodes)
-              {
-                if(e.Name == "ProductCode")
+                string[] array = new string[curNode.ChildNodes.Count];
+                int j = 0;
+                foreach(XmlElement product in curNode.ChildNodes)
                 {
-                    if(p.productCodes == null)
-                    {
-                      p.productCodes = new Guid[1];
-                      p.productCodes[0] = new Guid(e.InnerText);
-                    }
-                    else
-                    {
-                      Guid[] nd = new Guid[p.productCodes.Length + 1];
-                      Array.Copy(p.productCodes, nd, p.productCodes.Length);
-                      nd[p.productCodes.Length] = new Guid(e.InnerText);
-                      p.productCodes = nd;
-                    }
+                  array[j++] = product.InnerText;
                 }
-                else if(e.Name == "URL")
-                {
-                  p.URL = e.InnerText;
-                }
+
+                library.Add(curNode.GetAttribute("Name").ToLower(), new Suite(curNode.GetAttribute("Name"), array));
               }
-
-              library.Add(curNode.GetAttribute("Name").ToLower(), p);
-
             }
           }
         }
+      }
+      /*catch(System.FormatException)
+        {
+        return false;
+        }*/
+      catch(System.Net.WebException)
+      {
+        return false;
       }
 
       return true;
