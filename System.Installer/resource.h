@@ -2,8 +2,10 @@
 // Microsoft Visual C++ generated include file.
 // Used by app.rc
 
-#define WIPTVER "5,0,0,1"
-#define SYSINSTVER "4,0,0,1"
+#define WIPTVER "1,0,5,1"
+#define WIPTFVER 1,0,5,1
+#define SYSINSTVER "1,0,5,1"
+#define SYSINSTFVER 1,0,5,1
 
 
 #ifdef APSTUDIO_INVOKED

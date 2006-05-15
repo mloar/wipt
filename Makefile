@@ -14,10 +14,14 @@ all:
 	cd ..
 	-mkdir bin
 	copy /y wipt-get\wipt-get.exe bin
+	-copy /y wipt-get\wipt-get.pdb bin
 	copy /y wiptlib\wiptlib.dll bin
+	-copy /y wiptlib\wiptlib.pdb bin
 	copy /y System.Installer\System.Installer.dll bin
+	-copy /y System.Installer\System.Installer.pdb bin
 !IF "$(FRAMEWORKVERSION)"=="v2.0.50727"
 	copy /y wipt-gui\wipt-gui.exe bin
+	-copy /y wipt-gui\wipt-gui.pdb bin
 !ENDIF
 
 wipt.msi: all

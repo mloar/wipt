@@ -24,10 +24,10 @@ using System.Runtime.CompilerServices;
 //
 [assembly: AssemblyTitle("Wipt Library")]
 [assembly: AssemblyDescription("Wipt Library")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("ACM@UIUC")]
+[assembly: AssemblyConfiguration("Release")]
+[assembly: AssemblyCompany("SIGWin, ACM@UIUC")]
 [assembly: AssemblyProduct("Windows Installer Package Tool")]
-[assembly: AssemblyCopyright("Copyright (c) 2006 Association for Computing Machinery at the University of Illinois at Urbana-Champaign.  All rights reserved.")]
+[assembly: AssemblyCopyright("Copyright (c) 2006 ACM@UIUC.  All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]		
 
@@ -42,7 +42,7 @@ using System.Runtime.CompilerServices;
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
 
-[assembly: AssemblyVersion("1.0.0.*")]
+[assembly: AssemblyVersion("1.0.5.1")]
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 

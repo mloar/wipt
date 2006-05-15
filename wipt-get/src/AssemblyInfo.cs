@@ -22,12 +22,12 @@ using System.Runtime.CompilerServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly: AssemblyTitle("")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyTitle("Wipt-Get")]
+[assembly: AssemblyDescription("Wipt Application Maintenance Utility")]
+[assembly: AssemblyConfiguration("Release")]
+[assembly: AssemblyCompany("SIGWin, ACM@UIUC")]
+[assembly: AssemblyProduct("Windows Installer Package Tool")]
+[assembly: AssemblyCopyright("Copyright 2006 ACM@UIUC.  All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]		
 
@@ -42,7 +42,7 @@ using System.Runtime.CompilerServices;
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
 
-[assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.0.5.2")]
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 

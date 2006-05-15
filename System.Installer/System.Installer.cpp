@@ -287,7 +287,7 @@ retry:
 
           try
           {
-            String*  temp = String::Concat("{",productCode.ToString()->ToUpper());
+            String* temp = String::Concat("{",patchCode.ToString()->ToUpper());
             temp = String::Concat(temp,"}");
             code = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
           }
@@ -303,7 +303,7 @@ retry:
           buffer = static_cast<LPWSTR>(static_cast<void*>(Marshal::AllocHGlobal(1024 * sizeof(wchar_t))));
           DWORD ccb = 1024 * sizeof(wchar_t);
 
-          if(MsiGetProductInfo(code, INSTALLPROPERTY_VERSIONSTRING, buffer, &ccb) != ERROR_SUCCESS)
+          if(MsiGetPatchInfo(code, INSTALLPROPERTY_LOCALPACKAGE, buffer, &ccb) != ERROR_SUCCESS)
             return NULL;
 
           ret  = Marshal::PtrToStringUni(buffer);

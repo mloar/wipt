@@ -14,7 +14,7 @@ System.Installer.obj: StdAfx.pch System.Installer.cpp
 AssemblyInfo.obj: StdAfx.pch AssemblyInfo.cpp
 	cl /D "WIN32" /D "_WINDLL" /D "_MBCS" /MT /GS  /nologo /c /Zi /clr /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\mscorlib.dll" /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll" AssemblyInfo.cpp
 
-System.Installer.res: System.Installer.rc
+System.Installer.res: System.Installer.rc resource.h
 	rc System.Installer.rc
 
 stdafx.pch: StdAfx.cpp StdAfx.h

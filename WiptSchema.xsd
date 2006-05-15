@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema targetNamespace="urn:xmlns:sigwin:wipt-get:repository" xmlns="urn:xmlns:sigwin:wipt-get:repository"
-	xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="0.6">
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="0.7">
 	<xs:element name="Repository">
 		<xs:complexType>
 			<xs:sequence>
@@ -15,7 +15,9 @@
 		<xs:sequence>
       <xs:element name="Description" type="xs:string" minOccurs="0" maxOccurs="1" />
       <xs:element name="StableVersion" type="Version" minOccurs="1" maxOccurs="1" />
-			<xs:element name="Package" type="Package" maxOccurs="unbounded" />
+			<xs:element name="Package" type="Package" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="Transform" type="Transform" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="Patch" type="Patch" minOccurs="0" maxOccurs="unbounded" />
 		</xs:sequence>
 		<xs:attribute name="Name" type="xs:string" use="required" />
 	  <xs:attribute name="Publisher" type="xs:string" use="required" />
@@ -24,7 +26,7 @@
 	</xs:complexType>
 	<xs:complexType name="Suite">
 		<xs:sequence>
-			<xs:element name="Product" type="xs:string" maxOccurs="unbounded" />
+			<xs:element name="Product" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
 		</xs:sequence>
 		<xs:attribute name="Name" type="xs:string" use="required" />
 	</xs:complexType>
@@ -37,15 +39,22 @@
 		<xs:sequence>
 			<xs:element name="Version" type="Version" minOccurs="1" maxOccurs="1" />
 			<xs:element name="URL" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
-			<xs:element name="TransformURL" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
-      <xs:element name="Patch" type="Patch" minOccurs="0" maxOccurs="unbounded" />
 		</xs:sequence>
 		<xs:attribute name="ProductCode" type="xs:string" use="required" />
 	</xs:complexType>
-  <xs:complexType name="Patch">
+  <xs:complexType name="Transform">
     <xs:sequence>
+      <xs:element name="MinVersion" type="Version" minOccurs="0" maxOccurs="1" />
+      <xs:element name="MaxVersion" type="Version" minOccurs="0" maxOccurs="1" />
       <xs:element name="URL" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
     </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Patch">
+    <xs:sequence>
+      <xs:element name="ProductCode" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="URL" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="Name" type="xs:string" use="required" />
     <xs:attribute name="PatchCode" type="xs:string" use="required" />
   </xs:complexType>
 </xs:schema>

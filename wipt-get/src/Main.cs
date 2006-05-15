@@ -88,7 +88,7 @@ namespace ACM.Wipt
         }
 
         bool success = true;
-        switch(command)
+        switch(command.ToLower())
         {
           case "install":
             foreach(string package in packages.Split(','))
@@ -103,7 +103,11 @@ namespace ACM.Wipt
             List();
           break;
           case "upgrade":
-            Upgrade();
+            //Upgrade();
+            Console.Error.WriteLine("Upgrade not yet implemented.");
+          break;
+          case "dist-upgrade":
+            DistUpgrade(ignoretransforms, batch);
           break;
           case "update":
             Update();
@@ -159,7 +163,7 @@ namespace ACM.Wipt
         string URL = "";
         string transforms = "";
         string targetdir = "";
-        string[] patches = null;
+        Patch[] patches = null;
         RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE\\ACM\\Wipt");
         if(rk != null)
         { 
@@ -194,7 +198,16 @@ namespace ACM.Wipt
           }
           rk.Close();
         }
+        if(!ignoretransforms && product.transforms != null)
+        {
+          foreach(Transform transform in product.transforms)
+          {
+            if((transform.minVersion == null || instVersion >= transform.minVersion) && (transform.maxVersion == null || instVersion <= transform.maxVersion))
+              transforms = transform.URL + ";";
+          }
+        }
         Guid productCode = Guid.Empty;
+        patches = product.patches;
         if(product.packages != null)
         {
           foreach(Package package in product.packages)
@@ -205,34 +218,10 @@ namespace ACM.Wipt
             {
               URL = package.URL;
               productCode = package.productCode;
-              if(!ignoretransforms && package.transforms != null)
-              {
-                foreach(string transform in package.transforms)
-                {
-                  transforms = transform + ";";
-                }
-              }
-              if(package.patches != null)
-              {
-                foreach(Patch patch in package.patches)
-                {
-                  if(patches == null)
-                  {
-                    patches = new string[1];
-                    patches[0] = patch.URL;
-                  }
-                  else
-                  {
-                    string[] pn = new string[patches.Length + 1];
-                    Array.Copy(pn, patches, patches.Length);
-                    pn[patches.Length] = patch.URL;
-                    patches = pn;
-                  }
-                }
-              }
               break;
             }
           }
+
         }
         if(URL == "")
         {
@@ -279,9 +268,11 @@ namespace ACM.Wipt
 
         if(patches != null)
         {
-          foreach(string patch in patches)
+          foreach(Patch patch in patches)
           {
-            ret = ApplicationDatabase.applyPatch(patch, productCode);
+            Console.Write("Applying patch "+ patch.name + "... ");
+            ret = ApplicationDatabase.applyPatch(patch.URL, productCode);
+            Console.WriteLine("");
             if(ret != 0)
             {
               Console.Error.WriteLine(
@@ -362,6 +353,10 @@ namespace ACM.Wipt
           }
           instVersion = new Version(major, minor, build);
         }
+        else
+        {
+          instVersion = null;
+        }
         try
         {
           object obj = Library.GetProduct(parts[0]);
@@ -378,7 +373,7 @@ namespace ACM.Wipt
 
           Product product = (Product)obj;
 
-          if(IsInstalled(product.name, instVersion))
+          if(instVersion == null ? IsInstalled(product.name) : IsInstalled(product.name, instVersion, instVersion))
           {
             Console.Write("Removing product "+ product.name + "... ");
 
@@ -399,7 +394,7 @@ namespace ACM.Wipt
             }
           }
           else
-            Console.WriteLine(p + " is not installed");
+            Console.WriteLine(product.name + " is not installed");
         }
         catch(WiptException e)
         {
@@ -484,7 +479,31 @@ namespace ACM.Wipt
         if(o is Product)
         {
           Product p = (Product)o;
+
         }
+      }
+    }
+
+    public static void DistUpgrade(bool ignoretransforms, bool batch)
+    {
+      try
+      {
+        object[] list = Library.GetAll();
+        foreach(object o in list)
+        {
+          if(o is Product)
+          {
+            Product p = (Product)o;
+            if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
+            {
+              Install(p.name, ignoretransforms, batch);
+            }
+          }
+        }
+      }
+      catch(WiptException e)
+      {
+        Console.Error.Write(e.Message);
       }
     }
 
