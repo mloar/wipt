@@ -381,8 +381,7 @@ namespace ACM.Wipt
                 new ACM.Sys.Windows.Installer.ProgressHandler(
                   ProgressHandler));
 
-            Guid productCode = ApplicationDatabase.findProductByUpgradeCode(
-                product.upgradeCode, 0);
+            Guid productCode = GetVersionProductCode(product.upgradeCode, instVersion);
 
             uint ret = ApplicationDatabase.removeProduct(productCode);
             Console.WriteLine("");
@@ -555,6 +554,25 @@ namespace ACM.Wipt
       }
     }
 
+    private static Guid GetVersionProductCode(Guid upgradecode, Version version)
+    {
+      Guid ret;
+      int i = 0;
+      while((ret = ApplicationDatabase.findProductByUpgradeCode(upgradecode, i)) != Guid.Empty)
+      {
+        if(version == null || version.Equals(StringToVersion(ApplicationDatabase.getInstalledVersion(ret))))
+        {
+          return ret;
+        }
+        else
+        {
+          i++;
+        }
+      }
+
+      return Guid.Empty;
+    }
+
     private static bool IsInstalled(string product)
     {
       Object obj = Library.GetProduct(product);
@@ -647,6 +665,23 @@ namespace ACM.Wipt
       }
 
       return true;
+    }
+
+    private static Version StringToVersion(string version)
+    {
+      string[] ver = version.Split('.');
+      if(ver.Length == 1)
+      {
+        return new Version(ver[0], "", "");
+      }
+      else if(ver.Length == 2)
+      {
+        return new Version(ver[0], ver[1], "");
+      }
+      else
+      {
+        return new Version(ver[0], ver[1], ver[2]);
+      }
     }
 
     private static int index = 0;
