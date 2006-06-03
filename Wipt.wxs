@@ -50,7 +50,7 @@
       <ComponentRef Id="WiptLibComponent" />
 		</Feature>
 		<Upgrade Id="C1781722-8046-4A2A-8419-5CBC9616220C">
-			<UpgradeVersion Minimum="1.0.5" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" IncludeMinimum="yes" />
+			<UpgradeVersion Minimum="1.0.5" Property="NEWERPRODUCTFOUND" IncludeMinimum="yes" />
 			<Property Id="NEWERPRODUCTFOUND" Secure="yes" />
 			<UpgradeVersion Minimum="1.0.0.0" Maximum="1.0.5" Property="PREVIOUSVERSIONSINSTALLED" IncludeMinimum="yes" />
 			<Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
@@ -58,6 +58,7 @@
 		<CustomAction Id="SetPrereqs" BinaryKey="MSVBDPCADLL" DllEntry="CheckFX" />
 		<InstallExecuteSequence>
 			<Custom Action="SetPrereqs" Before="AppSearch" />
+      <RemoveExistingProducts After="InstallFinalize" />
 		</InstallExecuteSequence>
 	</Product>
 </Wix>
