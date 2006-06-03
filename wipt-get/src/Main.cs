@@ -41,9 +41,6 @@ using Microsoft.Win32;
 
 namespace ACM.Wipt
 {
-  /// <remarks>
-  /// Summary description for Main.
-  /// </remarks>
   public class WiptGetter
   {
     [STAThread]
@@ -103,8 +100,7 @@ namespace ACM.Wipt
             List();
           break;
           case "upgrade":
-            //Upgrade();
-            Console.Error.WriteLine("Upgrade not yet implemented.");
+            Upgrade(ignoretransforms);
           break;
           case "dist-upgrade":
             DistUpgrade(ignoretransforms, batch);
@@ -128,21 +124,7 @@ namespace ACM.Wipt
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
-          string major="", minor="", build="";
-          string[] verparts = parts[1].Split('.');
-          if(verparts.Length >= 1)
-          {
-            major = verparts[0];
-          }
-          if(verparts.Length >= 2)
-          {
-            minor = verparts[1];
-          }
-          if(verparts.Length >= 3)
-          {
-            build = verparts[2];
-          }
-          instVersion = new Version(major, minor, build);
+          instVersion = StringToVersion(parts[1]);
         }
         object obj = Library.GetProduct(parts[0]);
         if(obj == null)
@@ -157,46 +139,18 @@ namespace ACM.Wipt
 
         Product product = (Product)obj;
 
-        if(instVersion.Equals(new Version("0","0","0")))
+        if(instVersion == new Version("0","0","0"))
           instVersion = product.stableVersion;
 
         string URL = "";
         string transforms = "";
         string targetdir = "";
+        string otherprops = "";
         Patch[] patches = null;
-        RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE\\ACM\\Wipt");
-        if(rk != null)
-        { 
-          object temp = rk.GetValue("TargetDir");
-          if(temp == null)
-          {
-          }
-          else if(!(temp is string))
-          {
-            Console.Error.WriteLine("HKLM\\ACM\\Wipt\\TargetDir is not a REG_SZ - ignored");
-          }
-          else
-          {
-            targetdir = (string)temp;
-          }
-          rk.Close();
-        }
-        rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\ACM\\Wipt");
-        if(rk != null)
+        string temp;
+        if((temp = WiptConfig.GetTargetPath()) != null)
         {
-          object temp = rk.GetValue("TargetDir");
-          if(temp == null)
-          {
-          }
-          else if(!(temp is string))
-          {
-            Console.Error.WriteLine("HKCU\\ACM\\Wipt\\TargetDir is not a REG_SZ - ignored");
-          }
-          else
-          {
-            targetdir = (string)temp;
-          }
-          rk.Close();
+          targetdir = temp;
         }
         if(!ignoretransforms && product.transforms != null)
         {
@@ -234,9 +188,15 @@ namespace ACM.Wipt
         if(state != InstallState.Removed && state != InstallState.Absent 
             && state != InstallState.Unknown)
         {
-          // TODO: Make it able to upgrade to new version with same productcode
-          Console.Error.WriteLine(product.name + " is already the latest version");
-          return true;
+          if(instVersion == StringToVersion(ApplicationDatabase.getInstalledVersion(productCode)))
+          {
+            Console.Error.WriteLine(product.name + " is already the latest version");
+            return true;
+          }
+          else
+          {
+            otherprops = "REINSTALL=ALL REINSTALLMODE=vomus";
+          }
         }
 
         if(targetdir == "")
@@ -253,7 +213,8 @@ namespace ACM.Wipt
 
         uint ret;
         ret = ApplicationDatabase.installProduct(URL,
-            (transforms!=""?"REBOOT=R TARGETDIR=" + targetdir + " TRANSFORMS=" + transforms:"REBOOT=R TARGETDIR=" + targetdir));
+            (transforms != "" ? otherprops + " REBOOT=R TARGETDIR=" + targetdir + " TRANSFORMS=" + transforms :
+             otherprops + " REBOOT=R TARGETDIR=" + targetdir));
         Console.WriteLine("");
 
         if(ret != 0)
@@ -266,22 +227,8 @@ namespace ACM.Wipt
 
         }
 
-        if(patches != null)
-        {
-          foreach(Patch patch in patches)
-          {
-            Console.Write("Applying patch "+ patch.name + "... ");
-            ret = ApplicationDatabase.applyPatch(patch.URL, productCode);
-            Console.WriteLine("");
-            if(ret != 0)
-            {
-              Console.Error.WriteLine(
-                  "Error code {0} returned from applyPatch for "
-                  + product.name,ret);
-              Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
-            }
-          }
-        }
+        ApplyPatches(patches, productCode);
+
 
         return true;
       }
@@ -337,21 +284,7 @@ namespace ACM.Wipt
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
-          string major="", minor="", build="";
-          string[] verparts = parts[1].Split('.');
-          if(verparts.Length >= 1)
-          {
-            major = verparts[0];
-          }
-          if(verparts.Length >= 2)
-          {
-            minor = verparts[1];
-          }
-          if(verparts.Length >= 3)
-          {
-            build = verparts[2];
-          }
-          instVersion = new Version(major, minor, build);
+          instVersion = StringToVersion(parts[1]);
         }
         else
         {
@@ -424,6 +357,38 @@ namespace ACM.Wipt
       }
     }
 
+    public static void ApplyPatches(Patch[] patches, Guid productCode)
+    {
+      if(patches != null)
+      {
+        foreach(Patch patch in patches)
+        {
+          if(patch.productCodes == null)
+          {
+            patch.productCodes = new Guid[1];
+            patch.productCodes[0] = productCode;
+          }
+          foreach(Guid code in patch.productCodes)
+          {
+            if(code == productCode)
+            {
+              Console.Write("Applying patch "+ patch.name + "... ");
+              uint ret = ApplicationDatabase.applyPatch(patch.URL, productCode);
+              Console.WriteLine("");
+              if(ret != 0)
+              {
+                Console.Error.WriteLine(
+                    "Error code {0} returned from applyPatch for "
+                    + patch.name, ret);
+                Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
     public static void Usage()
     {
       string usage = @"
@@ -437,6 +402,7 @@ namespace ACM.Wipt
         remove
         update
         upgrade
+        dist-upgrade
         show
         ";
       Console.WriteLine(usage);
@@ -470,15 +436,35 @@ namespace ACM.Wipt
       }
     }
 
-    public static void Upgrade()
+    public static void Upgrade(bool ignoretransforms)
     {
       object[] list = Library.GetAll();
       foreach(object o in list)
       {
         if(o is Product)
         {
+          Guid prod;
+          int k = 0;
           Product p = (Product)o;
+          
+          while((prod = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, k)) != Guid.Empty)
+          {
+            foreach(Package g in p.packages)
+            {
+              if(g.productCode == prod)
+              {
+                if(StringToVersion(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
+                {
+                  Install(p.name + "=" + g.version.ToString(), ignoretransforms, true);
+                  break;
+                }
 
+                ApplyPatches(p.patches, prod);
+              }
+            }
+
+            k++;
+          }
         }
       }
     }
@@ -520,7 +506,7 @@ namespace ACM.Wipt
             foreach(Package k in p.packages)
             {
               string installstring="";
-              if(p.stableVersion.Equals(k.version))
+              if(p.stableVersion == k.version)
                 installstring = "(stable)";
               if(ApplicationDatabase.getProductState(k.productCode)
                   == InstallState.Default)
@@ -560,7 +546,7 @@ namespace ACM.Wipt
       int i = 0;
       while((ret = ApplicationDatabase.findProductByUpgradeCode(upgradecode, i)) != Guid.Empty)
       {
-        if(version == null || version.Equals(StringToVersion(ApplicationDatabase.getInstalledVersion(ret))))
+        if(version == null || version == StringToVersion(ApplicationDatabase.getInstalledVersion(ret)))
         {
           return ret;
         }
@@ -691,6 +677,50 @@ namespace ACM.Wipt
         index = 0;
       char[] bob = new char[] {'\\','|','/','-'};
       Console.Write(new char[] {'\x08', bob[index]});
+    }
+
+    private class WiptConfig
+    {
+      public static string GetTargetPath()
+      {
+        string targetdir = null;
+        RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE\\ACM\\Wipt");
+        if(rk != null)
+        { 
+          object temp = rk.GetValue("TargetDir");
+          if(temp == null)
+          {
+          }
+          else if(!(temp is string))
+          {
+            Console.Error.WriteLine("HKLM\\ACM\\Wipt\\TargetDir is not a REG_SZ - ignored");
+          }
+          else
+          {
+            targetdir = (string)temp;
+          }
+          rk.Close();
+        }
+        rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\ACM\\Wipt");
+        if(rk != null)
+        {
+          object temp = rk.GetValue("TargetDir");
+          if(temp == null)
+          {
+          }
+          else if(!(temp is string))
+          {
+            Console.Error.WriteLine("HKCU\\ACM\\Wipt\\TargetDir is not a REG_SZ - ignored");
+          }
+          else
+          {
+            targetdir = (string)temp;
+          }
+          rk.Close();
+        }
+
+        return targetdir;
+      }
     }
   }
 }
