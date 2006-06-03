@@ -126,29 +126,34 @@ namespace ACM.Wipt
       /// <summary>Determines whether a version is less than another.</summary>
       /// <param name="v1">First version.</param>
       /// <param name="v2">Second version.</param>
-      public static bool operator <(Version v1, Version v2)
+      public static bool operator < (Version v1, Version v2)
       {
         return v1.major.CompareTo(v2.major) < 0 || ((v1.major.CompareTo(v2.major) < 0) && v1.minor.CompareTo(v2.major) < 0)
           || ((v1.major.CompareTo(v2.major) < 0) && (v1.minor.CompareTo(v2.minor) < 0) && (v1.build.CompareTo(v2.build) < 0));
       }
-      /// <summary>Determines whether versions are equal.</summary>
-      /// <param name="o">Object for comparison.</param>
-      public override bool Equals(object o)
-      {
-        if(!(o is Version))
-        {
-          return false;
-        }
 
-        Version v = (Version)o;
-        return (major == v.major) && (minor == v.minor) && (build == v.build);
+      /// <summary>Determines whether a version is equal to another.</summary>
+      /// <param name="v1">First version.</param>
+      /// <param name="v2">Second version.</param>
+      public static bool operator == (Version v1, Version v2)
+      {
+        return (v1.major == v2.major) && (v1.minor == v2.minor) && (v1.build == v2.build);
       }
+
+      /// <summary>Determines whether a version is not equal to another.</summary>
+      /// <param name="v1">First version.</param>
+      /// <param name="v2">Second version.</param>
+      public static bool operator != (Version v1, Version v2)
+      {
+        return !(v1 == v2);
+      }
+
       /// <summary>Determines whether a version is greater than another.</summary>
       /// <param name="v1">First version.</param>
       /// <param name="v2">Second version.</param>
-      public static bool operator >(Version v1, Version v2)
+      public static bool operator > (Version v1, Version v2)
       {
-        return !((v1 < v2) || v1.Equals(v2));
+        return !((v1 < v2) || (v1 == v2));
       }
 
       /// <summary>
@@ -156,7 +161,7 @@ namespace ACM.Wipt
       /// </summary>
       /// <param name="v1">First version.</param>
       /// <param name="v2">Second version.</param>
-      public static bool operator >=(Version v1, Version v2)
+      public static bool operator >= (Version v1, Version v2)
       {
         return !(v1 < v2);
       }
@@ -166,10 +171,32 @@ namespace ACM.Wipt
       /// </summary>
       /// <param name="v1">First version.</param>
       /// <param name="v2">Second version.</param>
-      public static bool operator <=(Version v1, Version v2)
+      public static bool operator <= (Version v1, Version v2)
       {
         return !(v1 > v2);
       }
+
+      /// <summary>
+      /// Determines whether a version is equal to an object.
+      /// </summary>
+      /// <param name="o">Object for comparison.</param>
+      public override bool Equals(object o)
+      {
+        if(!(o is Version))
+          return false;
+
+        Version v = (Version) o;
+        return this == v;
+      }
+      
+      /// <summary>
+      /// Provides a value suitable for hashing.
+      /// </summary>
+      public override int GetHashCode()
+      {
+        return int.Parse(build) * 100000 + int.Parse(minor) * 100 + int.Parse(major);
+      }
+
     }
   /// <remarks>
   /// The Patch class represents a patch.
@@ -181,6 +208,8 @@ namespace ACM.Wipt
       public Guid patchCode;
       /// <summary>The name of the patch.</summary>
       public string name;
+      /// <summary>The product codes to which this patch applies.</summary>
+      public Guid[] productCodes;
       /// <summary>The URL of the patch.</summary>
       public string URL;
 
@@ -217,7 +246,7 @@ namespace ACM.Wipt
       public Package[] packages;
       /// <summary>An array of transforms for this product.</summary>
       public Transform[] transforms;
-      /// <summary>Patches for the package.</summary>
+      /// <summary>Patches for the product.</summary>
       public Patch[] patches;
 
       /// <summary>The constructor for the Product class.</summary>
@@ -545,6 +574,21 @@ namespace ACM.Wipt
                       if(v.Name == "URL")
                       {
                         g.URL = v.InnerText;
+                      }
+                      else if(v.Name == "ProductCode")
+                      {
+                        if(g.productCodes == null)
+                        {
+                          g.productCodes = new Guid[1];
+                          g.productCodes[0] = new Guid(v.InnerText);
+                        }
+                        else
+                        {
+                          Guid[] nm = new Guid[g.productCodes.Length + 1];
+                          Array.Copy(g.productCodes, nm, g.productCodes.Length);
+                          nm[g.productCodes.Length] = new Guid(v.InnerText);
+                          g.productCodes = nm;
+                        }
                       }
                     }
                     if(p.patches == null)
