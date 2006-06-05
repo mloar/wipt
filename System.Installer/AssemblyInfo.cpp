@@ -24,12 +24,12 @@ using namespace System::Runtime::CompilerServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly:AssemblyTitleAttribute("System.Installer")];
-[assembly:AssemblyDescriptionAttribute("")];
+[assembly:AssemblyTitleAttribute("Windows Installer Interface")];
+[assembly:AssemblyDescriptionAttribute("The Windows Installer Interface Library")];
 [assembly:AssemblyConfigurationAttribute("")];
 [assembly:AssemblyCompanyAttribute("SIGWin, the Special Interest Group for Windows Development")];
 [assembly:AssemblyProductAttribute("WIPT")];
-[assembly:AssemblyCopyrightAttribute("")];
+[assembly:AssemblyCopyrightAttribute("Copyright 2006 ACM@UIUC.  See LICENSE file for copying details.")];
 [assembly:AssemblyTrademarkAttribute("")];
 [assembly:AssemblyCultureAttribute("")];		
 
@@ -44,7 +44,7 @@ using namespace System::Runtime::CompilerServices;
 // You can specify all the value or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
 
-[assembly:AssemblyVersionAttribute("1.0.*")];
+[assembly:AssemblyVersionAttribute("1.0.6.0")];
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 
@@ -69,6 +69,6 @@ using namespace System::Runtime::CompilerServices;
 //       documentation for more information on this.
 //
 [assembly:AssemblyDelaySignAttribute(false)];
-[assembly:AssemblyKeyFileAttribute("keyfile.key")];
+[assembly:AssemblyKeyFileAttribute("keyfile.snk")];
 [assembly:AssemblyKeyNameAttribute("")];
 

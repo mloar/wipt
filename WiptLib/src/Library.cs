@@ -137,6 +137,17 @@ namespace ACM.Wipt
       /// <param name="v2">Second version.</param>
       public static bool operator == (Version v1, Version v2)
       {
+        if((object)v1 == null || (object)v2 == null)
+        {
+          if((object)v1 == null && (object)v2 == null)
+          {
+            return true;
+          }
+          else
+          {
+            return false;
+          }
+        }
         return (v1.major == v2.major) && (v1.minor == v2.minor) && (v1.build == v2.build);
       }
 

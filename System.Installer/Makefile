@@ -1,7 +1,7 @@
 .SILENT:
 
 System.Installer.dll: System.Installer.obj AssemblyInfo.obj System.Installer.res
-	link /OUT:System.Installer.dll /INCREMENTAL:NO /NOLOGO /DLL /FIXED:No nochkclr.obj mscoree.lib msi.lib kernel32.lib System.Installer.obj System.Installer.res
+	link /OUT:System.Installer.dll /INCREMENTAL:NO /NOLOGO /DLL /FIXED:No nochkclr.obj mscoree.lib msi.lib kernel32.lib System.Installer.obj AssemblyInfo.obj System.Installer.res
 !IF "$(FRAMEWORKVERSION)"=="v1.1.4322"
 	signcode -cn "Special Interest Group for Windows Development" System.Installer.dll
 !ELSE

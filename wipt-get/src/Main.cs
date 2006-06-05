@@ -420,7 +420,8 @@ namespace ACM.Wipt
       catch(WiptException e)
       {
         Console.Error.WriteLine(e.Message);
-        Console.Error.WriteLine(e.InnerException.Message);
+        if(e.InnerException != null)
+          Console.Error.WriteLine(e.InnerException.Message);
         return false;
       }
       catch(System.Xml.XmlException e)
