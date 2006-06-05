@@ -213,8 +213,8 @@ namespace ACM.Wipt
 
         uint ret;
         ret = ApplicationDatabase.installProduct(URL,
-            (transforms != "" ? otherprops + " REBOOT=R TARGETDIR=" + targetdir + " TRANSFORMS=" + transforms :
-             otherprops + " REBOOT=R TARGETDIR=" + targetdir));
+            (transforms != "" ? otherprops + " REBOOT=R ALLUSERS=2 TARGETDIR=" + targetdir + " TRANSFORMS=" + transforms :
+             otherprops + " REBOOT=R ALLUSERS=2 TARGETDIR=" + targetdir));
         Console.WriteLine("");
 
         if(ret != 0)
