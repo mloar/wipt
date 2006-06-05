@@ -9,7 +9,6 @@
     <Binary Id="VSDNETCFG" src="InstallUtil\VSDNETCFG.ibd" />
 		<Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
 		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFilesFolder">
 				<Directory Id="ACMDir" Name="ACM">
 					<Directory Id="INSTALLDIR" Name="Wipt">
 						<Component Id="SystemInstallerComponent" Guid="97C850D4-2909-4940-B39A-DB3D7ED6D0EC">
@@ -35,7 +34,6 @@
 							<File Id="wiptgui.exeFile" Name="WIPT-GUI.EXE" DiskId="1" src="wipt-gui\wipt-gui.exe" Vital="yes" 
                 KeyPath="yes" />
             </Component>-->
-					</Directory>
 				</Directory>
 			</Directory>
       <Directory Id="CommonAppDataFolder">
