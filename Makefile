@@ -23,10 +23,9 @@ all:
 !IF "$(DEBUG)"!=""
 	copy /y wipt-get\wipt-get.pdb bin
 	copy /y wiptlib\wiptlib.pdb bin
-	copy /y System.Installer\System.Installer.pdb bin
-  !IF "$(FRAMEWORKVERSION)"=="v2.0.50727"
-	  copy /y wipt-gui\wipt-gui.pdb bin
-  !ENDIF
+!IF "$(FRAMEWORKVERSION)"=="v2.0.50727"
+	copy /y wipt-gui\wipt-gui.pdb bin
+!ENDIF
 !ENDIF
 
 wipt.msi: all
