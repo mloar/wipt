@@ -25,7 +25,7 @@
 							<File Id="LicenseFile" Name="LICENSE.txt" DiskId="1" src="LICENSE" />
 							<Environment Id="UpdatePath" Name="PATH" Action="create" System="yes" Part="last" Value="[INSTALLDIR]" />
               <Registry Root="HKLM" Key="SOFTWARE\ACM\Wipt" Name="Repositories" 
-                Value="http://www.acm.uiuc.edu/sigwin/wipt/packages.xml" Type="string" />
+                Value="https://www-s.acm.uiuc.edu/sigwin/wipt/packages.xml" Type="string" />
               <RemoveFile Id="DataFile" On="uninstall" Name="library.dat" Property="WiptDataDir" />
               <RemoveFolder Id="WiptDataDirRemove" On="uninstall" Property="WiptDataDir" />
               <RemoveFolder Id="ACMDataDirRemove" On="uninstall" Property="ACMDataDir" />
