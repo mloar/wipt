@@ -90,7 +90,7 @@ namespace ACM.Wipt
           case "install":
             foreach(string package in packages.Split(','))
             {
-              success = success && Install(package, ignoretransforms, batch);
+              success = Install(package, ignoretransforms, batch) && success;
             }
           break;
           case "remove":
@@ -120,7 +120,7 @@ namespace ACM.Wipt
       {
         if(p == "")
           return true;
-        Version instVersion = new Version("0","0","0");
+        Version instVersion = null;
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
@@ -138,8 +138,14 @@ namespace ACM.Wipt
         }
 
         Product product = (Product)obj;
+        if(instVersion == null ? IsInstalled(product.name) : IsInstalled(product.name, instVersion, instVersion))
+        {
+          Console.Error.WriteLine(product.name + " is already installed");
+          return true;
+        }
 
-        if(instVersion == new Version("0","0","0"))
+
+        if(instVersion == null)
           instVersion = product.stableVersion;
 
         string URL = "";
@@ -156,7 +162,8 @@ namespace ACM.Wipt
         {
           foreach(Transform transform in product.transforms)
           {
-            if((transform.minVersion == null || instVersion >= transform.minVersion) && (transform.maxVersion == null || instVersion <= transform.maxVersion))
+            if((transform.minVersion == null || instVersion >= transform.minVersion) && 
+                (transform.maxVersion == null || instVersion <= transform.maxVersion))
               transforms = transform.URL + ";";
           }
         }
@@ -188,15 +195,8 @@ namespace ACM.Wipt
         if(state != InstallState.Removed && state != InstallState.Absent 
             && state != InstallState.Unknown)
         {
-          if(instVersion == StringToVersion(ApplicationDatabase.getInstalledVersion(productCode)))
-          {
-            Console.Error.WriteLine(product.name + " is already the latest version");
-            return true;
-          }
-          else
-          {
-            otherprops = "REINSTALL=ALL REINSTALLMODE=vomus";
-          }
+          // minor upgrade
+          otherprops = "REINSTALL=ALL REINSTALLMODE=vomus";
         }
 
         if(targetdir == "")
@@ -326,7 +326,7 @@ namespace ACM.Wipt
             }
           }
           else
-            Console.WriteLine(product.name + " is not installed");
+            Console.WriteLine(product.name + " (or the specified version of it) is not installed");
         }
         catch(WiptException e)
         {
@@ -562,96 +562,73 @@ namespace ACM.Wipt
 
     private static bool IsInstalled(string product)
     {
+      bool installed = false;
       Object obj = Library.GetProduct(product);
 
-      if(obj == null)
+      if(obj == null || obj is Patch)
       {
-        return false;
-      }
-
-      if(obj is Patch)
-      {
-        return false;
+        installed = false;
       }
       else if(obj is Suite)
       {
         Suite s = (Suite)obj;
-        bool installed = true;
+        installed = true;
+
         foreach(string prod in s.products)
         {
           installed = installed && IsInstalled(prod);
         }
-        return installed;
       }
       else if(obj is Product)
       {
         Product p = (Product)obj;
 
-        Guid productCode = 
-          ApplicationDatabase.findProductByUpgradeCode(
-              p.upgradeCode, 0);
-        if(productCode == Guid.Empty)        
+        int i = 0;
+        Guid productCode;
+        while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
         {
-          return false;
+          InstallState state = ApplicationDatabase.getProductState(productCode);
+          if(!(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
+          {
+            installed = true;
+          }
         }
-
-        InstallState state = 
-          ApplicationDatabase.getProductState(productCode);
-        if(state ==  InstallState.Removed 
-            || state == InstallState.Absent 
-            || state == InstallState.Unknown)
-        {
-          return false;
-        }
-
-        return true;
       }
 
-      return false;
+      return installed;
     }
 
     private static bool IsInstalled(string product, Version minVersion, Version maxVersion)
     {
       Object obj = Library.GetProduct(product);
-      if(obj == null)
-      {
-        return false;
-      }
-
-      if(!(obj is Product))
+      if(obj == null || !(obj is Product))
       {
         return false;
       }
 
       Product p = (Product)obj;
 
-      Guid productCode = 
-        ApplicationDatabase.findProductByUpgradeCode(
-            p.upgradeCode,0);
-      if(productCode == Guid.Empty)        
+      int i = 0;
+      Guid productCode;
+      while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
       {
-        return false;
+
+        InstallState state = ApplicationDatabase.getProductState(productCode);
+        if(!(state == InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
+        {
+
+          string[] ver = new string[3];
+          ver = ApplicationDatabase.getInstalledVersion(productCode).Split('.');
+
+          Version v = new Version(ver[0], ver[1], ver[2]);
+          if(v >= minVersion && v <= maxVersion)
+          {
+            return true;
+          }
+        }
       }
 
-      InstallState state = 
-        ApplicationDatabase.getProductState(productCode);
-      if(state == InstallState.Removed 
-          || state == InstallState.Absent 
-          || state == InstallState.Unknown)
-      {
-        return false; 
-      }
-
-      string[] ver = new string[3];
-      ver = ApplicationDatabase.getInstalledVersion(productCode).Split('.');
-
-      Version v = new Version(ver[0], ver[1], ver[2]);
-      if(v < minVersion || v > maxVersion)
-      {
-        return false;
-      }
-
-      return true;
+      return false;
     }
 
     private static Version StringToVersion(string version)
