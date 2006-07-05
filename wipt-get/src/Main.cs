@@ -504,6 +504,7 @@ namespace ACM.Wipt
           {
             Product p = (Product)o;
             Console.WriteLine("\n" + p.name);
+            Array.Sort(p.packages);
             foreach(Package k in p.packages)
             {
               string installstring="";
@@ -522,15 +523,6 @@ namespace ACM.Wipt
             foreach(string s in u.products)
             {
             Console.WriteLine('\t' + s);
-            }
-            }
-            else if(o is Patch)
-            {
-            Patch a = (Patch)o;
-            Console.WriteLine("Patch: " + a.name);
-            foreach(Guid g in a.productCodes)
-            {
-            Console.WriteLine('\t');
             }
             }*/
         }

@@ -45,7 +45,7 @@ namespace ACM.Wipt
 {
   /// <remarks>A Package represents an MSI file.</remarks>
   [Serializable()]
-    public class Package
+    public class Package : IComparable
     {
       /// <summary>The MSI's ProductCode.</summary>
       public Guid productCode;
@@ -61,6 +61,20 @@ namespace ACM.Wipt
       public Package(string ProductCode)
       {
         productCode = new Guid(ProductCode);
+      }
+
+      /// <summary>
+      /// IComparable.CompareTo implementation.
+      /// </summary>
+      public int CompareTo(object obj)
+      {
+        if(obj is Package)
+        {
+          Package p = (Package) obj;
+          return version.CompareTo(p.version);
+        }
+
+        throw new ArgumentException("object is not a Package");
       }
     }
 
@@ -88,7 +102,7 @@ namespace ACM.Wipt
   /// The Version object represents a Major.Minor.Build version string.
   /// </remarks>
   [Serializable()]
-    public class Version
+    public class Version : IComparable
     {
       /// <summary>The major version number.</summary>
       public string major;
@@ -128,8 +142,12 @@ namespace ACM.Wipt
       /// <param name="v2">Second version.</param>
       public static bool operator < (Version v1, Version v2)
       {
-        return v1.major.CompareTo(v2.major) < 0 || ((v1.major.CompareTo(v2.major) < 0) && v1.minor.CompareTo(v2.major) < 0)
-          || ((v1.major.CompareTo(v2.major) < 0) && (v1.minor.CompareTo(v2.minor) < 0) && (v1.build.CompareTo(v2.build) < 0));
+        if((object)v2 == null)
+          return false;
+        if((object)v1 == null)
+          return true;
+        return v1.major.CompareTo(v2.major) < 0 || ((v1.major.CompareTo(v2.major) == 0) && v1.minor.CompareTo(v2.minor) < 0)
+          || ((v1.major.CompareTo(v2.major) == 0) && (v1.minor.CompareTo(v2.minor) == 0) && (v1.build.CompareTo(v2.build) < 0));
       }
 
       /// <summary>Determines whether a version is equal to another.</summary>
@@ -208,6 +226,23 @@ namespace ACM.Wipt
         return int.Parse(build) * 100000 + int.Parse(minor) * 100 + int.Parse(major);
       }
 
+      /// <summary>
+      /// IComparable.CompareTo implementation.
+      /// </summary>
+      public int CompareTo(object obj)
+      {
+        if(obj is Version)
+        {
+          Version ver = (Version) obj;
+          if(this < ver)
+            return -1;
+          if(this == ver)
+            return 0;
+          return 1;
+        }
+
+        throw new ArgumentException("object is not a Version");    
+      }
     }
   /// <remarks>
   /// The Patch class represents a patch.
@@ -617,39 +652,39 @@ namespace ACM.Wipt
                     break;
                     case "Package":
                       Package a = new Package(e.GetAttribute("ProductCode"));
-                    if(p.packages == null)
-                    {
-                      p.packages = new Package[1];
-                      p.packages[0] = a;
-                    }
-                    else
-                    {
-                      Package[] np = new Package[p.packages.Length + 1];
-                      Array.Copy(p.packages, np, p.packages.Length);
-                      np[p.packages.Length] = a;
-                      p.packages = np;
-                    }
-                    foreach(XmlNode y in e.ChildNodes)
-                    {
-                      if(y is XmlElement)
+                      if(p.packages == null)
                       {
-                        XmlElement t = (XmlElement)y;
-
-                        switch(t.Name)
+                        p.packages = new Package[1];
+                        p.packages[0] = a;
+                      }
+                      else
+                      {
+                        Package[] np = new Package[p.packages.Length + 1];
+                        Array.Copy(p.packages, np, p.packages.Length);
+                        np[p.packages.Length] = a;
+                        p.packages = np;
+                      }
+                      foreach(XmlNode y in e.ChildNodes)
+                      {
+                        if(y is XmlElement)
                         {
-                          case "Version":
-                            a.version = new Version(
+                          XmlElement t = (XmlElement)y;
+
+                          switch(t.Name)
+                          {
+                            case "Version":
+                              a.version = new Version(
                                 t.GetAttribute("Major"),
                                 t.GetAttribute("Minor"),
                                 t.GetAttribute("Build")
                                 );
-                          break;
-                          case "URL":
-                            a.URL = t.InnerText;
-                          break;
+                            break;
+                            case "URL":
+                              a.URL = t.InnerText;
+                            break;
+                          } 
                         } 
-                      } 
-                    }
+                      }
                     break;
                   }
                 }
