@@ -124,7 +124,7 @@ namespace ACM.Wipt
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
-          instVersion = StringToVersion(parts[1]);
+          instVersion = new Version(parts[1]);
         }
         object obj = Library.GetProduct(parts[0]);
         if(obj == null)
@@ -220,15 +220,14 @@ namespace ACM.Wipt
         if(ret != 0)
         {
           Console.Error.WriteLine(
-              "Error code {0} returned from installProduct for "
-              + product.name,ret);
+              "Error code {0} returned from installProduct for {1}:"
+              , ret, product.name);
           Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
           return false;
 
         }
 
         ApplyPatches(patches, productCode);
-
 
         return true;
       }
@@ -284,7 +283,7 @@ namespace ACM.Wipt
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
-          instVersion = StringToVersion(parts[1]);
+          instVersion = new Version(parts[1]);
         }
         else
         {
@@ -444,17 +443,16 @@ namespace ACM.Wipt
       {
         if(o is Product)
         {
-          Guid prod;
           int k = 0;
           Product p = (Product)o;
-          
-          while((prod = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, k)) != Guid.Empty)
+
+          while((Guid prod = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, k)) != Guid.Empty)
           {
             foreach(Package g in p.packages)
             {
               if(g.productCode == prod)
               {
-                if(StringToVersion(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
+                if(new Version(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
                 {
                   Install(p.name + "=" + g.version.ToString(), ignoretransforms, true);
                   break;
@@ -539,7 +537,7 @@ namespace ACM.Wipt
       int i = 0;
       while((ret = ApplicationDatabase.findProductByUpgradeCode(upgradecode, i)) != Guid.Empty)
       {
-        if(version == null || version == StringToVersion(ApplicationDatabase.getInstalledVersion(ret)))
+        if(version == null || version == new Version(ApplicationDatabase.getInstalledVersion(ret)))
         {
           return ret;
         }
@@ -621,23 +619,6 @@ namespace ACM.Wipt
       }
 
       return false;
-    }
-
-    private static Version StringToVersion(string version)
-    {
-      string[] ver = version.Split('.');
-      if(ver.Length == 1)
-      {
-        return new Version(ver[0], "", "");
-      }
-      else if(ver.Length == 2)
-      {
-        return new Version(ver[0], ver[1], "");
-      }
-      else
-      {
-        return new Version(ver[0], ver[1], ver[2]);
-      }
     }
 
     private static int index = 0;

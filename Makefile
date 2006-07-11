@@ -32,7 +32,7 @@ wipt.msi: all
 	candle /nologo wipt.wxs
 	light /nologo wipt.wixobj
 !IF "$(FRAMEWORKVERSION)"=="v1.1.4322"
-	signcode -cn "Special Interest Group for Windows Development" wipt.msi
+	signcode -cn "Special Interest Group for Windows Development" -t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt.msi
 !ELSE
 	signtool sign /n "Special Interest Group for Windows Development" wipt.msi
 !ENDIF
