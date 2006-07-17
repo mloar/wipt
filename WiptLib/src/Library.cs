@@ -274,7 +274,7 @@ namespace ACM.Wipt
   /// Wipt.
   /// </remarks>
   [Serializable()]
-    public class Product
+    public class Product : IComparable
     {
       /// <summary>The product's UpgradeCode.</summary>
       public Guid upgradeCode;
@@ -305,34 +305,19 @@ namespace ACM.Wipt
         publisher = Publisher;
         supportURL = SupportURL;
       }
-    }
-
-  /// <remarks>
-  /// The Suite class represents a group of products that are independent, but
-  /// are often installed together.
-  /// </remarks>
-  [Serializable()]
-    public class Suite
-    {
-      /// <summary>The name of the suite.</summary>
-      public string name;
-
-      /// <summary>A array of the names of the products in the suite.</summary>
-      public string[] products;
 
       /// <summary>
-      /// The constructor for the Suite class.
+      /// IComparable.CompareTo implementation.
       /// </summary>
-      /// <param name="Name">
-      /// The name of the suite.
-      /// </param>
-      /// <param name="Products">
-      /// An array of strings for the products member.
-      /// </param>
-      public Suite(string Name, string[] Products)
+      public int CompareTo(object obj)
       {
-        products = Products;
-        name = Name;
+        if(obj is Product)
+        {
+          Product p = (Product) obj;
+          return name.CompareTo(p.name);
+        }
+
+        throw new ArgumentException("object is not a Package");
       }
     }
 
@@ -689,26 +674,6 @@ namespace ACM.Wipt
                   }
                 }
               }
-              else if(curNode.Name == "Suite")
-              {
-                string[] array = new string[curNode.ChildNodes.Count];
-                int j = 0;
-                foreach(XmlElement product in curNode.ChildNodes)
-                {
-                  array[j++] = product.InnerText;
-                }
-
-                if(!library.ContainsKey(curNode.GetAttribute("Name").ToLower()))
-                {
-                  library.Add(curNode.GetAttribute("Name").ToLower(), new Suite(
-                        curNode.GetAttribute("Name"), array));
-                }
-                else
-                {
-                  throw new WiptException("Name collision on Suite " +
-                      curNode.GetAttribute("Name"));
-                }
-              }
             }
           }
         }
@@ -722,15 +687,15 @@ namespace ACM.Wipt
     }
 
     /// <summary>
-    /// Retrieve a Product, Suite, or Patch object from the Library.
+    /// Retrieve a Product object from the Library.
     /// </summary>
     /// <param name="name">
     /// The name of the product, suite, or patch (case-insensitive).
     /// </param>
     /// <returns>
-    /// A Product, Suite, or Patch object or null if not found.
+    /// A Product object or null if not found.
     /// </returns>
-    public static object GetProduct(string name)
+    public static Product GetProduct(string name)
     {
       if(library == null)
       {
@@ -741,19 +706,19 @@ namespace ACM.Wipt
       }
       if(library.ContainsKey(name.ToLower()))
       {
-        return library[name.ToLower()];
+        return (Product)library[name.ToLower()];
       }
 
       return null;
     }
 
     /// <summary>
-    /// Returns all of the products and suites in the Library.
+    /// Returns all of the products in the Library.
     /// </summary>
     /// <returns>
-    /// An array of Product and Suite objects, or null if an error occurred.
+    /// An array of Product objects, or null if an error occurred.
     /// </returns>
-    public static object[] GetAll()
+    public static Product[] GetAll()
     {
       if(library == null)
       {
@@ -762,11 +727,11 @@ namespace ACM.Wipt
           throw new WiptException("Could not load package database.");
         }
       }
-      object[] list = new object[library.Keys.Count];
+      Product[] list = new Product[library.Keys.Count];
       int i = 0;
       foreach(object s in library.Keys)
       {
-        list[i++] = library[s];
+        list[i++] = (Product)library[s];
       }
 
       return list;

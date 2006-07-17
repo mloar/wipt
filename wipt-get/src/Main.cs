@@ -126,18 +126,13 @@ namespace ACM.Wipt
         {
           instVersion = new Version(parts[1]);
         }
-        object obj = Library.GetProduct(parts[0]);
-        if(obj == null)
+        Product product = Library.GetProduct(parts[0]);
+        if(product == null)
         {
           Console.Error.WriteLine("No such product " + parts[0]);
           return false;
         }
-        else if(obj is Suite)
-        {
-          return InstallSuite((Suite)obj, ignoretransforms, batch);
-        }
 
-        Product product = (Product)obj;
         if(instVersion == null ? IsInstalled(product.name) : IsInstalled(product.name, instVersion, instVersion))
         {
           Console.Error.WriteLine(product.name + " is already installed");
@@ -238,41 +233,6 @@ namespace ACM.Wipt
       }
     }
 
-    private static bool InstallSuite(Suite suite, bool ignoretransforms, bool batch)
-    {
-      string c = "";
-      if(!batch)
-      {
-        Console.WriteLine(suite.name 
-            + " is a suite consisting of the following products:");
-        foreach(string s in suite.products)
-        {
-          Console.WriteLine(s);
-        }
-        Console.WriteLine("\r\nWould you like to install them?");
-        Console.Write("(y or n): ");
-        c = Console.ReadLine();
-        while(c != "y" && c != "Y" && c != "n" && c != "N")
-        {
-          Console.Write("\r\nPlease type 'y' or 'n': ");
-          c = Console.ReadLine();
-        }
-      }
-      if(c == "y" || c == "Y" || batch)
-      {
-        bool success = true;
-
-        foreach(string product in suite.products)
-        {
-          success = success && Install(product, ignoretransforms, batch);
-        }
-
-        return success;
-      }
-
-      return false;
-    }
-
     private static void Remove(string[] packages)
     {
       foreach(string p in packages)
@@ -291,19 +251,12 @@ namespace ACM.Wipt
         }
         try
         {
-          object obj = Library.GetProduct(parts[0]);
-          if(obj == null)
+          Product product = Library.GetProduct(parts[0]);
+          if(product == null)
           {
             Console.WriteLine("Could not find product " + parts[0]);
             continue;
           }
-          else if(obj is Suite)
-          {
-            RemoveSuite((Suite)obj);
-            continue;
-          }
-
-          Product product = (Product)obj;
 
           if(instVersion == null ? IsInstalled(product.name) : IsInstalled(product.name, instVersion, instVersion))
           {
@@ -331,28 +284,6 @@ namespace ACM.Wipt
         {
           Console.WriteLine(e.Message);
         }
-      }
-    }
-
-    private static void RemoveSuite(Suite suite)
-    {
-      Console.WriteLine(suite.name 
-          + " is a suite consisting of the following products:");
-      foreach(string s in suite.products)
-      {
-        Console.WriteLine(s);
-      }
-      Console.WriteLine("\r\nWould you like to remove them?");
-      Console.Write("(y or n): ");
-      string c = Console.ReadLine();
-      while(c != "y" && c != "Y" && c != "n" && c != "N")
-      {
-        Console.Write("\r\nPlease type 'y' or 'n': ");
-        c = Console.ReadLine();
-      }
-      if(c == "y" || c == "Y")
-      {
-        Remove(suite.products);
       }
     }
 
@@ -438,32 +369,29 @@ namespace ACM.Wipt
 
     public static void Upgrade(bool ignoretransforms)
     {
-      object[] list = Library.GetAll();
-      foreach(object o in list)
+      Product[] list = Library.GetAll();
+      foreach(Product p in list)
       {
-        if(o is Product)
+        int k = 0;
+        Guid prod;
+
+        while((prod = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, k)) != Guid.Empty)
         {
-          int k = 0;
-          Product p = (Product)o;
-
-          while((Guid prod = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, k)) != Guid.Empty)
+          foreach(Package g in p.packages)
           {
-            foreach(Package g in p.packages)
+            if(g.productCode == prod)
             {
-              if(g.productCode == prod)
+              if(new Version(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
               {
-                if(new Version(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
-                {
-                  Install(p.name + "=" + g.version.ToString(), ignoretransforms, true);
-                  break;
-                }
-
-                ApplyPatches(p.patches, prod);
+                Install(p.name + "=" + g.version.ToString(), ignoretransforms, true);
+                break;
               }
-            }
 
-            k++;
+              ApplyPatches(p.patches, prod);
+            }
           }
+
+          k++;
         }
       }
     }
@@ -472,16 +400,12 @@ namespace ACM.Wipt
     {
       try
       {
-        object[] list = Library.GetAll();
-        foreach(object o in list)
+        Product[] list = Library.GetAll();
+        foreach(Product p in list)
         {
-          if(o is Product)
+          if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
           {
-            Product p = (Product)o;
-            if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
-            {
-              Install(p.name, ignoretransforms, batch);
-            }
+            Install(p.name, ignoretransforms, batch);
           }
         }
       }
@@ -495,34 +419,22 @@ namespace ACM.Wipt
     {
       try
       {
-        object[] list = Library.GetAll();
-        foreach(object o in list)
+        Product[] list = Library.GetAll();
+        Array.Sort(list);
+        foreach(Product p in list)
         {
-          if(o is Product)
+          Console.WriteLine("\n" + p.name);
+          Array.Sort(p.packages);
+          foreach(Package k in p.packages)
           {
-            Product p = (Product)o;
-            Console.WriteLine("\n" + p.name);
-            Array.Sort(p.packages);
-            foreach(Package k in p.packages)
-            {
-              string installstring="";
-              if(p.stableVersion == k.version)
-                installstring = "(stable)";
-              if(ApplicationDatabase.getProductState(k.productCode)
-                  == InstallState.Default)
-                installstring += "(installed)";
-              Console.WriteLine("\tv{0}.{1}.{2} {3}", k.version.major, k.version.minor, k.version.build, installstring);
-            }
+            string installstring="";
+            if(p.stableVersion == k.version)
+              installstring = "(stable)";
+            if(ApplicationDatabase.getProductState(k.productCode)
+                == InstallState.Default)
+              installstring += "(installed)";
+            Console.WriteLine("\tv{0}.{1}.{2} {3}", k.version.major, k.version.minor, k.version.build, installstring);
           }
-          /*else if(o is Suite)
-            {
-            Suite u = (Suite)o;
-            Console.WriteLine("Suite: " + u.name);
-            foreach(string s in u.products)
-            {
-            Console.WriteLine('\t' + s);
-            }
-            }*/
         }
       }
       catch(WiptException e)
@@ -533,73 +445,63 @@ namespace ACM.Wipt
 
     private static Guid GetVersionProductCode(Guid upgradecode, Version version)
     {
-      Guid ret;
-      int i = 0;
-      while((ret = ApplicationDatabase.findProductByUpgradeCode(upgradecode, i)) != Guid.Empty)
+    Guid ret;
+    int i = 0;
+    while((ret = ApplicationDatabase.findProductByUpgradeCode(upgradecode, i)) != Guid.Empty)
+    {
+      if(version == null || version == new Version(ApplicationDatabase.getInstalledVersion(ret)))
       {
-        if(version == null || version == new Version(ApplicationDatabase.getInstalledVersion(ret)))
-        {
-          return ret;
-        }
-        else
-        {
-          i++;
-        }
+        return ret;
       }
-
-      return Guid.Empty;
+      else
+      {
+        i++;
+      }
     }
 
-    private static bool IsInstalled(string product)
+    return Guid.Empty;
+  }
+
+  private static bool IsInstalled(string product)
+  {
+    bool installed = false;
+    Object obj = Library.GetProduct(product);
+
+    if(obj == null || obj is Patch)
     {
-      bool installed = false;
-      Object obj = Library.GetProduct(product);
-
-      if(obj == null || obj is Patch)
-      {
-        installed = false;
-      }
-      else if(obj is Suite)
-      {
-        Suite s = (Suite)obj;
-        installed = true;
-
-        foreach(string prod in s.products)
-        {
-          installed = installed && IsInstalled(prod);
-        }
-      }
-      else if(obj is Product)
-      {
-        Product p = (Product)obj;
-
-        int i = 0;
-        Guid productCode;
-        while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
-        {
-          InstallState state = ApplicationDatabase.getProductState(productCode);
-          if(!(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
-          {
-            installed = true;
-          }
-        }
-      }
-
-      return installed;
+      installed = false;
     }
-
-    private static bool IsInstalled(string product, Version minVersion, Version maxVersion)
+    else if(obj is Product)
     {
-      Object obj = Library.GetProduct(product);
-      if(obj == null || !(obj is Product))
-      {
-        return false;
-      }
-
       Product p = (Product)obj;
 
       int i = 0;
       Guid productCode;
+      while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
+      {
+        InstallState state = ApplicationDatabase.getProductState(productCode);
+        if(!(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
+        {
+          installed = true;
+        }
+      }
+    }
+
+    return installed;
+  }
+
+  private static bool IsInstalled(string product, Version minVersion, Version maxVersion)
+  {
+    Object obj = Library.GetProduct(product);
+    if(obj == null || !(obj is Product))
+    {
+      return false;
+    }
+
+    Product p = (Product)obj;
+
+    int i = 0;
+    Guid productCode;
       while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
       {
 

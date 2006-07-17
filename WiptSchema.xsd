@@ -7,7 +7,6 @@
         <xs:element name="Maintainer" type="xs:string" minOccurs="1" maxOccurs="1" />
         <xs:element name="SupportURL" type="xs:string" minOccurs="1" maxOccurs="1" />
 				<xs:element name="Product" type="Product" minOccurs="0" maxOccurs="unbounded" />
-				<xs:element name="Suite" type="Suite" minOccurs="0" maxOccurs="unbounded" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -23,12 +22,6 @@
 	  <xs:attribute name="Publisher" type="xs:string" use="required" />
     <xs:attribute name="SupportURL" type="xs:string" use="required" />
 		<xs:attribute name="UpgradeCode" type="xs:string" use="required" />
-	</xs:complexType>
-	<xs:complexType name="Suite">
-		<xs:sequence>
-			<xs:element name="Product" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
-		</xs:sequence>
-		<xs:attribute name="Name" type="xs:string" use="required" />
 	</xs:complexType>
   <xs:complexType name="Version">
 		<xs:attribute name="Major" type="xs:int" use="required" />
