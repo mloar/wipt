@@ -47,7 +47,6 @@ namespace ACM.Wipt
       public static void Main(string[] args)
       {
         bool ignoretransforms = false;
-        bool batch = false;
         string command = "";
         string packages = "";
 
@@ -55,9 +54,6 @@ namespace ACM.Wipt
         {
           switch(arg.ToLower())
           {
-            case "--batch":
-              batch = true;
-            break;
             case "--ignore-transforms":
               ignoretransforms = true;
             break;
@@ -90,7 +86,7 @@ namespace ACM.Wipt
           case "install":
             foreach(string package in packages.Split(','))
             {
-              success = Install(package, ignoretransforms, batch) && success;
+              success = Install(package, ignoretransforms) && success;
             }
           break;
           case "remove":
@@ -103,7 +99,7 @@ namespace ACM.Wipt
             Upgrade(ignoretransforms);
           break;
           case "dist-upgrade":
-            DistUpgrade(ignoretransforms, batch);
+            DistUpgrade(ignoretransforms);
           break;
           case "update":
             Update();
@@ -114,7 +110,7 @@ namespace ACM.Wipt
       }
     }
 
-    private static bool Install(string p, bool ignoretransforms, bool batch)
+    private static bool Install(string p, bool ignoretransforms)
     {
       try
       {
@@ -181,7 +177,7 @@ namespace ACM.Wipt
         }
         if(URL == "")
         {
-          Console.Error.WriteLine("No package listed for specified version of "
+          Console.Error.WriteLine("No package listed for stable version of "
               + product.name + ".  Contact the repository maintainer.");
           return false;
         }
@@ -210,19 +206,12 @@ namespace ACM.Wipt
         ret = ApplicationDatabase.installProduct(URL,
             (transforms != "" ? otherprops + " REBOOT=R ALLUSERS=2 TARGETDIR=" + targetdir + " TRANSFORMS=" + transforms :
              otherprops + " REBOOT=R ALLUSERS=2 TARGETDIR=" + targetdir));
-        Console.WriteLine("");
+        Console.Write("\x08");
+        Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
 
-        if(ret != 0)
-        {
-          Console.Error.WriteLine(
-              "Error code {0} returned from installProduct for {1}:"
-              , ret, product.name);
-          Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+
+        if((ret != 0 && ret != 3010) || !ApplyPatches(patches, productCode))
           return false;
-
-        }
-
-        ApplyPatches(patches, productCode);
 
         return true;
       }
@@ -269,13 +258,8 @@ namespace ACM.Wipt
             Guid productCode = GetVersionProductCode(product.upgradeCode, instVersion);
 
             uint ret = ApplicationDatabase.removeProduct(productCode);
-            Console.WriteLine("");
-            if(ret != 0)
-            {
-              Console.WriteLine(
-                  "Error code {0} returned from removeProduct",ret);
-              Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
-            }
+            Console.Write("\x08");
+            Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
           }
           else
             Console.WriteLine(product.name + " (or the specified version of it) is not installed");
@@ -287,8 +271,9 @@ namespace ACM.Wipt
       }
     }
 
-    public static void ApplyPatches(Patch[] patches, Guid productCode)
+    public static bool ApplyPatches(Patch[] patches, Guid productCode)
     {
+      bool success = true;
       if(patches != null)
       {
         foreach(Patch patch in patches)
@@ -304,19 +289,16 @@ namespace ACM.Wipt
             {
               Console.Write("Applying patch "+ patch.name + "... ");
               uint ret = ApplicationDatabase.applyPatch(patch.URL, productCode);
-              Console.WriteLine("");
+              Console.Write("\x08");
+              Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
               if(ret != 0)
-              {
-                Console.Error.WriteLine(
-                    "Error code {0} returned from applyPatch for "
-                    + patch.name, ret);
-                Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
-              }
+                success = false;
               break;
             }
           }
         }
       }
+      return success;
     }
 
     public static void Usage()
@@ -324,16 +306,15 @@ namespace ACM.Wipt
       string usage = @"
         Usage:	wipt-get [options] <command> <product>[=version][, <product>[=version], ...]
         OPTIONS
-        --batch                     Don't ask any questions
         --ignore-transforms         Don't apply transforms listed in repository
 
         COMMANDS
-        install
-        remove
-        update
-        upgrade
-        dist-upgrade
-        show
+        install                     Install product(s)
+        remove                      Remove product(s)
+        update                      Download package lists from repositories
+        upgrade                     Perform small updates and minor upgrades
+        dist-upgrade                Perform major upgrades to stable version
+        show                        List all products and packages
         ";
       Console.WriteLine(usage);
     }
@@ -383,7 +364,7 @@ namespace ACM.Wipt
             {
               if(new Version(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
               {
-                Install(p.name + "=" + g.version.ToString(), ignoretransforms, true);
+                Install(p.name + "=" + g.version.ToString(), ignoretransforms);
                 break;
               }
 
@@ -396,7 +377,7 @@ namespace ACM.Wipt
       }
     }
 
-    public static void DistUpgrade(bool ignoretransforms, bool batch)
+    public static void DistUpgrade(bool ignoretransforms)
     {
       try
       {
@@ -405,7 +386,7 @@ namespace ACM.Wipt
         {
           if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
           {
-            Install(p.name, ignoretransforms, batch);
+            Install(p.name + "=" + p.stableVersion.ToString(), ignoretransforms);
           }
         }
       }
