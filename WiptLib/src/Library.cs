@@ -105,11 +105,11 @@ namespace ACM.Wipt
     public class Version : IComparable
     {
       /// <summary>The major version number.</summary>
-      public string major;
+      private string major;
       /// <summary>The minor version number.</summary>
-      public string minor;
+      private string minor;
       /// <summary>The build version number.</summary>
-      public string build;
+      private string build;
       /// <summary>A constructor for the Version class.</summary>
       /// <param name="Major">The major version number.</param>
       /// <param name="Minor">The minor version number.</param>
@@ -157,14 +157,7 @@ namespace ACM.Wipt
       {
         if((object)v1 == null || (object)v2 == null)
         {
-          if((object)v1 == null && (object)v2 == null)
-          {
-            return true;
-          }
-          else
-          {
-            return false;
-          }
+          return (object)v1 == null && (object)v2 == null;
         }
         return (v1.major == v2.major) && (v1.minor == v2.minor) && (v1.build == v2.build);
       }

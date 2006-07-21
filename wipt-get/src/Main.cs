@@ -47,6 +47,8 @@ namespace ACM.Wipt
       public static void Main(string[] args)
       {
         bool ignoretransforms = false;
+        bool ignorepatches = false;
+        bool peruser = false;
         string command = "";
         string packages = "";
 
@@ -57,11 +59,17 @@ namespace ACM.Wipt
             case "--ignore-transforms":
               ignoretransforms = true;
             break;
+            case "--ignore-patches":
+              ignorepatches = true;
+            break;
+            case "--per-user":
+              peruser = true;
+            break;
             default:
-            if(command == "")
-              command = arg.ToLower();
-            else
-              packages += arg + ",";
+              if(command == "")
+                command = arg.ToLower();
+              else
+                packages += arg + ",";
             break;
           }
         }
@@ -86,7 +94,7 @@ namespace ACM.Wipt
           case "install":
             foreach(string package in packages.Split(','))
             {
-              success = Install(package, ignoretransforms) && success;
+              success = Install(package, ignoretransforms, ignorepatches, peruser) && success;
             }
           break;
           case "remove":
@@ -96,10 +104,10 @@ namespace ACM.Wipt
             List();
           break;
           case "upgrade":
-            Upgrade(ignoretransforms);
+            Upgrade(ignoretransforms, ignorepatches, peruser);
           break;
           case "dist-upgrade":
-            DistUpgrade(ignoretransforms);
+            DistUpgrade(ignoretransforms, ignorepatches, peruser);
           break;
           case "update":
             Update();
@@ -110,7 +118,7 @@ namespace ACM.Wipt
       }
     }
 
-    private static bool Install(string p, bool ignoretransforms)
+    private static bool Install(string p, bool ignoretransforms, bool ignorepatches, bool peruser)
     {
       try
       {
@@ -140,9 +148,8 @@ namespace ACM.Wipt
           instVersion = product.stableVersion;
 
         string URL = "";
-        string transforms = "";
+        string properties = "";
         string targetdir = "";
-        string otherprops = "";
         Patch[] patches = null;
         string temp;
         if((temp = WiptConfig.GetTargetPath()) != null)
@@ -151,12 +158,14 @@ namespace ACM.Wipt
         }
         if(!ignoretransforms && product.transforms != null)
         {
+          properties += "TRANSFORMS=";
           foreach(Transform transform in product.transforms)
           {
             if((transform.minVersion == null || instVersion >= transform.minVersion) && 
                 (transform.maxVersion == null || instVersion <= transform.maxVersion))
-              transforms = transform.URL + ";";
+              properties = transform.URL + ";";
           }
+          properties += " ";
         }
         Guid productCode = Guid.Empty;
         patches = product.patches;
@@ -164,9 +173,7 @@ namespace ACM.Wipt
         {
           foreach(Package package in product.packages)
           {
-            if(package.version.major == instVersion.major
-                && package.version.minor == instVersion.minor
-                && package.version.build == instVersion.build)
+            if(package.version == instVersion)
             {
               URL = package.URL;
               productCode = package.productCode;
@@ -175,9 +182,10 @@ namespace ACM.Wipt
           }
 
         }
+
         if(URL == "")
         {
-          Console.Error.WriteLine("No package listed for stable version of "
+          Console.Error.WriteLine("No package listed for specified version of "
               + product.name + ".  Contact the repository maintainer.");
           return false;
         }
@@ -187,13 +195,19 @@ namespace ACM.Wipt
             && state != InstallState.Unknown)
         {
           // minor upgrade
-          otherprops = "REINSTALL=ALL REINSTALLMODE=vomus";
+          properties += "REINSTALL=ALL REINSTALLMODE=vomus ";
         }
 
         if(targetdir == "")
         {
           targetdir = "\"" + Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles) + "\"";
           Console.Error.WriteLine("Warning: no TARGETDIR specified.  Defaulting to " + targetdir);
+        }
+
+        properties += "TARGETDIR=" + targetdir + " REBOOT=R ";
+        if(!peruser)
+        {
+          properties += "ALLUSERS=1 ";
         }
 
         Console.Write("Installing product "+ product.name + "... ");
@@ -203,14 +217,12 @@ namespace ACM.Wipt
               ProgressHandler));
 
         uint ret;
-        ret = ApplicationDatabase.installProduct(URL,
-            (transforms != "" ? otherprops + " REBOOT=R ALLUSERS=2 TARGETDIR=" + targetdir + " TRANSFORMS=" + transforms :
-             otherprops + " REBOOT=R ALLUSERS=2 TARGETDIR=" + targetdir));
+        ret = ApplicationDatabase.installProduct(URL, properties);
         Console.Write("\x08");
-        Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+        Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
 
 
-        if((ret != 0 && ret != 3010) || !ApplyPatches(patches, productCode))
+        if((ret != 0 && ret != 3010) || (ignorepatches || !ApplyPatches(patches, productCode)))
           return false;
 
         return true;
@@ -290,7 +302,7 @@ namespace ACM.Wipt
               Console.Write("Applying patch "+ patch.name + "... ");
               uint ret = ApplicationDatabase.applyPatch(patch.URL, productCode);
               Console.Write("\x08");
-              Console.Error.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+              Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
               if(ret != 0)
                 success = false;
               break;
@@ -306,7 +318,9 @@ namespace ACM.Wipt
       string usage = @"
         Usage:	wipt-get [options] <command> <product>[=version][, <product>[=version], ...]
         OPTIONS
+        --ignore-patches            Don't apply patches listed in repository
         --ignore-transforms         Don't apply transforms listed in repository
+        --per-user                  Perform a per-user install
 
         COMMANDS
         install                     Install product(s)
@@ -348,7 +362,7 @@ namespace ACM.Wipt
       }
     }
 
-    public static void Upgrade(bool ignoretransforms)
+    public static void Upgrade(bool ignoretransforms, bool ignorepatches, bool peruser)
     {
       Product[] list = Library.GetAll();
       foreach(Product p in list)
@@ -364,11 +378,13 @@ namespace ACM.Wipt
             {
               if(new Version(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
               {
-                Install(p.name + "=" + g.version.ToString(), ignoretransforms);
-                break;
+                Install(p.name + "=" + g.version.ToString(), ignoretransforms, ignorepatches, peruser);
               }
-
-              ApplyPatches(p.patches, prod);
+              else if(!ignorepatches)
+              {
+                ApplyPatches(p.patches, prod);
+              }
+              break;
             }
           }
 
@@ -377,7 +393,7 @@ namespace ACM.Wipt
       }
     }
 
-    public static void DistUpgrade(bool ignoretransforms)
+    public static void DistUpgrade(bool ignoretransforms, bool ignorepatches, bool peruser)
     {
       try
       {
@@ -386,7 +402,7 @@ namespace ACM.Wipt
         {
           if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
           {
-            Install(p.name + "=" + p.stableVersion.ToString(), ignoretransforms);
+            Install(p.name + "=" + p.stableVersion.ToString(), ignoretransforms, ignorepatches, peruser);
           }
         }
       }
@@ -414,7 +430,7 @@ namespace ACM.Wipt
             if(ApplicationDatabase.getProductState(k.productCode)
                 == InstallState.Default)
               installstring += "(installed)";
-            Console.WriteLine("\tv{0}.{1}.{2} {3}", k.version.major, k.version.minor, k.version.build, installstring);
+            Console.WriteLine("\tv{0} {1}", k.version.ToString(), installstring);
           }
         }
       }
