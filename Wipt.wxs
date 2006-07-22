@@ -23,11 +23,19 @@
 							<File Id="wiptget.exeFile" Name="WIPT-GET.EXE" DiskId="1" src="wipt-get\wipt-get.exe" Vital="yes" 
                 KeyPath="yes" />
 							<File Id="LicenseFile" Name="LICENSE.txt" DiskId="1" src="LICENSE" />
-							<Environment Id="UpdatePath" Name="PATH" Action="create" System="yes" Part="last" Value="[INSTALLDIR]" />
+							<Environment Id="UpdatePath" Name="PATH" Action="set" System="yes" Part="last" Value="[INSTALLDIR]" />
               <Registry Root="HKLM" Key="SOFTWARE\ACM\Wipt" Name="Repositories" 
                 Value="https://www-s.acm.uiuc.edu/sigwin/wipt/packages.xml" Type="string" />
               <RemoveFile Id="DataFile" On="uninstall" Name="library.dat" Property="WiptDataDir" />
+              <CreateFolder Directory="WiptDataDir">
+                <Permission User="Administrators" GenericAll="yes" />
+                <Permission User="Users" GenericRead="yes" GenericExecute="yes" ReadPermission="yes" ReadExtendedAttributes="yes" />
+              </CreateFolder>
               <RemoveFolder Id="WiptDataDirRemove" On="uninstall" Property="WiptDataDir" />
+              <CreateFolder Directory="ACMDataDir">
+                <Permission User="Administrators" GenericAll="yes" />
+                <Permission User="Users" GenericRead="yes" GenericExecute="yes" ReadPermission="yes" ReadExtendedAttributes="yes" />
+              </CreateFolder>
               <RemoveFolder Id="ACMDataDirRemove" On="uninstall" Property="ACMDataDir" />
 						</Component>
             <!--<Component Id="WiptguiComponent" Guid="B4FCF30E-409C-45D4-81AE-CB41F0B88BF7">
@@ -49,7 +57,7 @@
       <ComponentRef Id="WiptLibComponent" />
 		</Feature>
 		<Upgrade Id="C1781722-8046-4A2A-8419-5CBC9616220C">
-			<UpgradeVersion Minimum="1.0.7" Property="NEWERPRODUCTFOUND" IncludeMinimum="yes" />
+			<UpgradeVersion Minimum="1.0.7" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" IncludeMinimum="yes" />
 			<Property Id="NEWERPRODUCTFOUND" Secure="yes" />
 			<UpgradeVersion Minimum="1.0.0" Maximum="1.0.7" Property="PREVIOUSVERSIONSINSTALLED" IncludeMinimum="yes" />
 			<Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
