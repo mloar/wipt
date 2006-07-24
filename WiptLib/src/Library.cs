@@ -259,6 +259,7 @@ namespace ACM.Wipt
       {
         patchCode = PatchCode;
         name = Name;
+        productCodes = new Guid[0];
       }
     }
 
@@ -297,6 +298,9 @@ namespace ACM.Wipt
         name = Name;
         publisher = Publisher;
         supportURL = SupportURL;
+        packages = new Package[0];
+        transforms = new Transform[0];
+        patches = new Patch[0];
       }
 
       /// <summary>
@@ -578,18 +582,12 @@ namespace ACM.Wipt
                         break;
                       }
                     }
-                    if(p.transforms == null)
-                    {
-                      p.transforms = new Transform[1];
-                      p.transforms[0] = q;
-                    }
-                    else
-                    {
-                      Transform[] tmp = new Transform[p.transforms.Length + 1];
-                      Array.Copy(p.transforms, tmp, p.transforms.Length);
-                      tmp[p.transforms.Length] = q;
-                      p.transforms = tmp;
-                    }
+
+                    Transform[] tmp = new Transform[p.transforms.Length + 1];
+                    Array.Copy(p.transforms, tmp, p.transforms.Length);
+                    tmp[p.transforms.Length] = q;
+                    p.transforms = tmp;
+                   
                     break;
                     case "Patch":
                       Patch g = new Patch(new Guid(e.GetAttribute("PatchCode")), e.GetAttribute("Name"));
@@ -601,47 +599,29 @@ namespace ACM.Wipt
                       }
                       else if(v.Name == "ProductCode")
                       {
-                        if(g.productCodes == null)
-                        {
-                          g.productCodes = new Guid[1];
-                          g.productCodes[0] = new Guid(v.InnerText);
-                        }
-                        else
-                        {
-                          Guid[] nm = new Guid[g.productCodes.Length + 1];
-                          Array.Copy(g.productCodes, nm, g.productCodes.Length);
-                          nm[g.productCodes.Length] = new Guid(v.InnerText);
-                          g.productCodes = nm;
-                        }
+                        Guid[] nm = new Guid[g.productCodes.Length + 1];
+                        Array.Copy(g.productCodes, nm, g.productCodes.Length);
+                        nm[g.productCodes.Length] = new Guid(v.InnerText);
+                        g.productCodes = nm;
                       }
                     }
-                    if(p.patches == null)
-                    {
-                      p.patches = new Patch[1];
-                      p.patches[0] = g;
-                    }
-                    else
+
                     {
                       Patch[] nm = new Patch[p.patches.Length + 1];
                       Array.Copy(p.patches, nm, p.patches.Length);
                       nm[p.patches.Length] = g;
                       p.patches = nm;
                     }
+
                     break;
                     case "Package":
                       Package a = new Package(e.GetAttribute("ProductCode"));
-                      if(p.packages == null)
-                      {
-                        p.packages = new Package[1];
-                        p.packages[0] = a;
-                      }
-                      else
-                      {
-                        Package[] np = new Package[p.packages.Length + 1];
-                        Array.Copy(p.packages, np, p.packages.Length);
-                        np[p.packages.Length] = a;
-                        p.packages = np;
-                      }
+
+                      Package[] np = new Package[p.packages.Length + 1];
+                      Array.Copy(p.packages, np, p.packages.Length);
+                      np[p.packages.Length] = a;
+                      p.packages = np;
+                      
                       foreach(XmlNode y in e.ChildNodes)
                       {
                         if(y is XmlElement)
