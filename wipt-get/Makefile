@@ -1,7 +1,7 @@
 .SILENT:
 
-wipt-get.exe: src\Main.cs src\AssemblyInfo.cs res\App.ico ..\System.Installer\System.Installer.dll ..\WiptLib\WiptLib.dll
-	csc /nologo $(DEBUG) /optimize /Win32Icon:res\App.ico /r:..\System.Installer\System.Installer.dll /r:..\WiptLib\WiptLib.dll /out:wipt-get.exe src\Main.cs src\AssemblyInfo.cs
+wipt-get.exe: src\Main.cs src\AssemblyInfo.cs res\App.ico ..\System.Installer\ACM.Wipt.WindowsInstaller.dll ..\WiptLib\WiptLib.dll
+	csc /nologo $(DEBUG) /optimize /Win32Icon:res\App.ico /r:..\System.Installer\ACM.Wipt.WindowsInstaller.dll /r:..\WiptLib\WiptLib.dll /out:wipt-get.exe src\Main.cs src\AssemblyInfo.cs
 !IF ("$(FRAMEWORKVERSION)"=="v1.1.4322") && !DEFINED(DEBUG)
 	signcode -cn "Special Interest Group for Windows Development" -t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt-get.exe
 !ELSEIFNDEF DEBUG

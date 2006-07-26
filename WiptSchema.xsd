@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema targetNamespace="urn:xmlns:sigwin:wipt-get:repository" xmlns="urn:xmlns:sigwin:wipt-get:repository"
-	xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="0.75">
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="0.8">
 	<xs:element name="Repository">
 		<xs:complexType>
 			<xs:sequence>
-        <xs:element name="Maintainer" type="xs:string" minOccurs="1" maxOccurs="1" />
-        <xs:element name="SupportURL" type="xs:string" minOccurs="1" maxOccurs="1" />
 				<xs:element name="Product" type="Product" minOccurs="0" maxOccurs="unbounded" />
 			</xs:sequence>
+      <xs:attribute name="Maintainer" type="xs:string" use="required" />
+      <xs:attribute name="SupportURL" type="xs:string" use="required" />
 		</xs:complexType>
 	</xs:element>
 	<xs:complexType name="Product">

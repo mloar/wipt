@@ -5,27 +5,28 @@
 		<Package Id="????????-????-????-????-????????????" Description="Windows Installer Package Tool" 
       Comments="Copyright (c) 2006 ACM@UIUC.  See the LICENSE file for copying details."
 			InstallerVersion="200" Compressed="yes" />
-		<Binary Id="MSVBDPCADLL" src="InstallUtil\MSVBDPCADLL.ibd" />
-    <Binary Id="VSDNETCFG" src="InstallUtil\VSDNETCFG.ibd" />
+		<Binary Id="MSVBDPCADLL" SourceFile="InstallUtil\MSVBDPCADLL.ibd" />
+    <Binary Id="VSDNETCFG" SourceFile="InstallUtil\VSDNETCFG.ibd" />
 		<Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
 		<Directory Id="TARGETDIR" Name="SourceDir">
 				<Directory Id="ACMDir" Name="ACM">
 					<Directory Id="INSTALLDIR" Name="Wipt">
-						<Component Id="SystemInstallerComponent" Guid="97C850D4-2909-4940-B39A-DB3D7ED6D0EC">
-							<File Id="System.Installer.dllFile" Name="SYSTEMI.DLL" LongName="System.Installer.dll" DiskId="1" 
-                src="System.Installer\System.Installer.dll" Vital="yes" KeyPath="yes" Assembly=".net" />
+						<Component Id="SystemInstallerComponent" Guid="D3315C16-FD47-48FD-B15D-0711FCEF603A">
+							<File Id="ACMWiptWindowsInstaller.dllFile" Name="ACM.Wipt.WindowsInstaller.dll" DiskId="1" 
+                Source="System.Installer\ACM.Wipt.WindowsInstaller.dll" Vital="yes" KeyPath="yes" Assembly=".net" />
 						</Component>
-						<Component Id="WiptLibComponent" Guid="7EA95F0B-B220-4C1F-922A-8DE12FEF1A3D">
-							<File Id="WiptLib.dllFile" Name="WIPTLIB.DLL" DiskId="1" src="WiptLib\WiptLib.dll" Vital="yes" 
+						<Component Id="WiptLibComponent" Guid="083477F3-A07D-490C-B17F-25EF6DBC7C79">
+							<File Id="WiptLib.dllFile" Name="WIPTLIB.DLL" DiskId="1" Source="WiptLib\WiptLib.dll" Vital="yes" 
                 KeyPath="yes" Assembly=".net" />
 						</Component>
-						<Component Id="WiptgetComponent" Guid="8C9ECEB5-A540-4700-9DED-E29B13582AD7">
-							<File Id="wiptget.exeFile" Name="WIPT-GET.EXE" DiskId="1" src="wipt-get\wipt-get.exe" Vital="yes" 
+						<Component Id="WiptgetComponent" Guid="7A676134-8776-442E-96CE-6D7570BF0897">
+							<File Id="wiptget.exeFile" Name="WIPT-GET.EXE" DiskId="1" Source="wipt-get\wipt-get.exe" Vital="yes" 
                 KeyPath="yes" />
-							<File Id="LicenseFile" Name="LICENSE.txt" DiskId="1" src="LICENSE" />
+							<File Id="LicenseFile" Name="LICENSE.txt" DiskId="1" Source="LICENSE" />
 							<Environment Id="UpdatePath" Name="PATH" Action="set" System="yes" Part="last" Value="[INSTALLDIR]" />
-              <Registry Root="HKLM" Key="SOFTWARE\ACM\Wipt" Name="Repositories" 
-                Value="https://www-s.acm.uiuc.edu/sigwin/wipt/packages.xml" Type="string" />
+              <RegistryKey Root="HKLM" Key="SOFTWARE\ACM\Wipt" Action="create" />
+              <RemoveRegistryKey Root="HKLM" Key="SOFTWARE\ACM\Wipt" Action="removeOnUninstall" />
+              <RegistryValue Root="HKLM" Key="SOFTWARE\ACM\Wipt" Name="Repositories" Value="https://www-s.acm.uiuc.edu/sigiwn/wipt/packages.xml" Type="string" />
               <RemoveFile Id="DataFile" On="uninstall" Name="library.dat" Property="WiptDataDir" />
               <CreateFolder Directory="WiptDataDir">
                 <Permission User="Administrators" GenericAll="yes" />
@@ -39,7 +40,7 @@
               <RemoveFolder Id="ACMDataDirRemove" On="uninstall" Property="ACMDataDir" />
 						</Component>
             <!--<Component Id="WiptguiComponent" Guid="B4FCF30E-409C-45D4-81AE-CB41F0B88BF7">
-							<File Id="wiptgui.exeFile" Name="WIPT-GUI.EXE" DiskId="1" src="wipt-gui\wipt-gui.exe" Vital="yes" 
+							<File Id="wiptgui.exeFile" Name="WIPT-GUI.EXE" DiskId="1" Source="wipt-gui\wipt-gui.exe" Vital="yes" 
                 KeyPath="yes" />
             </Component>-->
 				</Directory>
@@ -56,15 +57,16 @@
 			<ComponentRef Id="SystemInstallerComponent" />
       <ComponentRef Id="WiptLibComponent" />
 		</Feature>
+	  <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
+		<Property Id="NEWERPRODUCTFOUND" Secure="yes" />
 		<Upgrade Id="C1781722-8046-4A2A-8419-5CBC9616220C">
-			<UpgradeVersion Minimum="1.0.7" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" IncludeMinimum="yes" />
-			<Property Id="NEWERPRODUCTFOUND" Secure="yes" />
-			<UpgradeVersion Minimum="1.0.0" Maximum="1.0.7" Property="PREVIOUSVERSIONSINSTALLED" IncludeMinimum="yes" />
-			<Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
+			<UpgradeVersion Minimum="1.0.8" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" IncludeMinimum="yes" />
+			<UpgradeVersion Minimum="1.0.0" Maximum="1.0.8" Property="PREVIOUSVERSIONSINSTALLED" IncludeMinimum="yes" MigrateFeatures="yes" />
 		</Upgrade>
 		<CustomAction Id="SetPrereqs" BinaryKey="MSVBDPCADLL" DllEntry="CheckFX" />
 		<InstallExecuteSequence>
 			<Custom Action="SetPrereqs" Before="AppSearch" />
+      <MigrateFeatureStates />
       <RemoveExistingProducts After="InstallFinalize" />
 		</InstallExecuteSequence>
 	</Product>

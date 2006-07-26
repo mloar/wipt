@@ -36,7 +36,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Xml;
-using ACM.Sys.Windows.Installer;
+using ACM.Wipt.WindowsInstaller;
 using Microsoft.Win32;
 
 namespace ACM.Wipt
@@ -235,7 +235,7 @@ namespace ACM.Wipt
         Console.Write("Installing "+ product.name + "... ");
 
         ApplicationDatabase.setProgressHandler(
-            new ACM.Sys.Windows.Installer.ProgressHandler(
+            new ACM.Wipt.WindowsInstaller.ProgressHandler(
               ProgressHandler));
 
         uint ret;
@@ -295,7 +295,7 @@ namespace ACM.Wipt
             Console.Write("Removing "+ product.name + "... ");
 
             ApplicationDatabase.setProgressHandler(
-                new ACM.Sys.Windows.Installer.ProgressHandler(
+                new ACM.Wipt.WindowsInstaller.ProgressHandler(
                   ProgressHandler));
 
             Guid productCode = GetVersionProductCode(product.upgradeCode, instVersion);
