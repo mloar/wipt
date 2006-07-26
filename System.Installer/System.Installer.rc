@@ -70,11 +70,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "ACM@UIUC"
-            VALUE "FileDescription", "ACM.Sys.Windows.Installer Assembly DLL"
+            VALUE "FileDescription", "ACM.Wipt.WindowsInstaller Assembly DLL"
             VALUE "FileVersion", SYSINSTVER
             VALUE "InternalName", "System.Installer"
             VALUE "LegalCopyright", "Copyright (C) 2006 ACM@UIUC.  All rights reserved."
-            VALUE "OriginalFilename", "System.Installer.dll"
+            VALUE "OriginalFilename", "ACM.Wipt.WindowsInstaller.dll"
             VALUE "ProductName", "Windows Installer Package Tool"
             VALUE "ProductVersion", WIPTVER
         END
