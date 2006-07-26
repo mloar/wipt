@@ -77,11 +77,14 @@ namespace ACM.Wipt
             if(command == "addpackage")
             {
               if(repofile == "")
-                repofile = arg;
+              {
+                if(arg == "--make-stable")
+                  makestable = true;
+                else
+                  repofile = arg;
+              }
               else if(msiurl == "")
                 msiurl = arg;
-              else if(arg.ToLower() == "--make-stable")
-                makestable = true;
               else
               {
                 Console.Error.WriteLine("Error: too many arguments");

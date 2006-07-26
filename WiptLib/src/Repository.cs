@@ -1,17 +1,54 @@
+/*
+ *  Copyright (c) 2006 Association for Computing Machinery at the 
+ *  University of Illinois at Urbana-Champaign.
+ *  All rights reserved.
+ * 
+ *  Developed by: Special Interest Group for Windows Development
+ *                ACM@UIUC
+ *                http://www.acm.uiuc.edu/sigwin
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a 
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal with the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following conditions:
+ *
+ *  Redistributions of source code must retain the above copyright notice, this
+ *  list of conditions and the following disclaimers.
+ *  Redistributions in binary form must reproduce the above copyright notice,
+ *  this list of conditions and the following disclaimers in the documentation
+ *  and/or other materials provided with the distribution.
+ *  Neither the names of SIGWin, ACM@UIUC, nor the names of its contributors
+ *  may be used to endorse or promote products derived from this Software
+ *  without specific prior written permission. 
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS WITH THE SOFTWARE.
+ */
+
 using System;
 using System.Text;
 using System.Xml;
 
 namespace ACM.Wipt
 {
+  /// <remarks>Represents a repository file.</remarks>
   public class Repository
   {
-    XmlDocument m_doc;
+    private XmlDocument m_doc;
 
     private Repository()
     {
     }
 
+    /// <summary>Loads data from a repository file.</summary>
+    /// <param name="xmlFile">The local file path.</param>
     public Repository(string xmlFile)
     {
       XmlTextReader ready = new XmlTextReader(xmlFile);
@@ -20,6 +57,11 @@ namespace ACM.Wipt
       ready.Close();
     }
 
+    /// <summary>Creates a new repository file.</summary>
+    /// <param name="xmlFile">The local file path.</param>
+    /// <param name="maintainer">The name of the repository maintainer.</param>
+    /// <param name="supportURL">URL for support of this repository.</param>
+    /// <returns>A reference to the newly created Repository.</returns>
     public static Repository Create(string xmlFile, string maintainer, string supportURL)
     {
       string formatstring = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n<Repository xmlns=\"urn:xmlns:sigwin:wipt-get:repository\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:SchemaLocation=\"urn:xmlns:sigwin:wipt-get:repository http://www.acm.uiuc.edu/sigwin/WiptSchema.xsd\" Maintainer=\"{0}\" SupportURL=\"{1}\"></Repository>";
@@ -37,6 +79,8 @@ namespace ACM.Wipt
       return new Repository(xmlFile);
     }
 
+    /// <summary>Saves the repository state to a file.</summary>
+    /// <param name="xmlFile">The local file path.</param>
     public void Save(string xmlFile)
     {
       XmlTextWriter tex = new XmlTextWriter(xmlFile, Encoding.UTF8);
@@ -48,6 +92,16 @@ namespace ACM.Wipt
       tex.Close();
     }
 
+    /// <summary>Adds an MSI package to the repository, creating the product entry if necessary.</summary>
+    /// <param name="productName">The name of the product.</param>
+    /// <param name="upgradeCode">The product's UpgradeCode.</param>
+    /// <param name="publisher">The product's publisher.</param>
+    /// <param name="supportURL">URL for support of the product.</param>
+    /// <param name="version">A dotted version string for this package.</param>
+    /// <param name="productCode">The package's product code.</param>
+    /// <param name="URL">The URL for the package.</param>
+    /// <param name="makestable">Whether this package should be made the stable version for the product</param>
+    /// <returns>true if the package could be added, false otherwise.</returns>
     public bool AddPackage(string productName, Guid upgradeCode, string publisher, string supportURL, string version,
         Guid productCode, string URL, bool makestable)
     {
@@ -74,7 +128,7 @@ namespace ACM.Wipt
               {
                 if(makestable)
                 {
-                  foreach(XmlElement g in l.ChildNodes)
+                  foreach(XmlElement g in t.ChildNodes)
                   {
                     if(g.Name == "StableVersion")
                     {
