@@ -125,12 +125,20 @@ namespace ACM.Wipt
             theRepo = new Repository(repofile);
 
             WebClient wc = new WebClient();
-            string tempy = Environment.GetFolderPath(Environment.SpecialFolder.InternetCache) + "\\wiptput.tmp";
-            System.IO.File.Delete(tempy);
-            wc.DownloadFile(msiurl, tempy);
-            MsiDatabase db = new MsiDatabase(tempy);
-            theRepo.AddPackage(db.ProductName, db.UpgradeCode, db.Manufacturer, db.SupportURL,
+            try
+            {
+              string tempy = Environment.GetFolderPath(Environment.SpecialFolder.InternetCache) + "\\wiptput.tmp";
+              System.IO.File.Delete(tempy);
+              wc.DownloadFile(msiurl, tempy);
+              MsiDatabase db = new MsiDatabase(tempy);
+              theRepo.AddPackage(db.ProductName, db.UpgradeCode, db.Manufacturer, db.SupportURL,
                 db.ProductVersion, db.ProductCode, msiurl, makestable);
+            }
+            catch(Exception)
+            {
+              Console.Error.WriteLine("ERROR: Could not open MSI database.");
+              return;
+            } 
             theRepo.Save(repofile);
           break;
           case "create":

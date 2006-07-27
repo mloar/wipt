@@ -40,7 +40,7 @@ using System.Runtime.CompilerServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly: AssemblyTitle("Wipt-Putt")]
+[assembly: AssemblyTitle("Wipt-Put")]
 [assembly: AssemblyDescription("Wipt Repository Maintenance Utility")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCompany("SIGWin, ACM@UIUC")]

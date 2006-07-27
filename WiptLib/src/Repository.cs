@@ -109,7 +109,7 @@ namespace ACM.Wipt
       XmlDocumentFragment frag = m_doc.CreateDocumentFragment();
       string[] vp = version.Split('.');
       string[] parts = new string[3]{"0","0","0"};
-      Array.Copy(vp, parts, vp.Length);
+      Array.Copy(vp, parts, Math.Min(vp.Length, 3));
       frag.InnerXml = string.Format(formatstring, "{" + productCode.ToString().ToUpper() + "}", parts[0], parts[1], parts[2], URL);
 
       string formatstring2 = "<Product xmlns=\"urn:xmlns:sigwin:wipt-get:repository\" Name=\"{0}\" UpgradeCode=\"{1}\" Publisher=\"{2}\" SupportURL=\"{3}\" ><StableVersion Major=\"{4}\" Minor=\"{5}\" Build=\"{6}\" /></Product>";
