@@ -23,7 +23,7 @@ all:
 !IF "$(FRAMEWORKVERSION)"=="v2.0.50727"
 	copy /y wipt-gui\wipt-gui.exe bin
 !ENDIF
-!IF "$(DEBUG)"!=""
+!IFDEF DEBUG
 	copy /y wipt-get\wipt-get.pdb bin
 	copy /y wipt-put\wipt-put.pdb bin
 	copy /y wiptlib\wiptlib.pdb bin
@@ -35,11 +35,7 @@ all:
 wipt.msi: all
 	candle /nologo wipt.wxs
 	light /nologo wipt.wixobj
-!IF "$(FRAMEWORKVERSION)"=="v1.1.4322"
-	signcode -cn "Special Interest Group for Windows Development" -t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt.msi
-!ELSE
-	signtool sign /n "Special Interest Group for Windows Development" wipt.msi
-!ENDIF
+	signtool sign /n "Special Interest Group for Windows Development" /t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt.msi
 
 clean:
 	-rmdir /s /q bin 2> nul

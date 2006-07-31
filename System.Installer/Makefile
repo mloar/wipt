@@ -2,10 +2,8 @@
 
 ACM.Wipt.WindowsInstaller.dll: ACM.Wipt.WindowsInstaller.obj AssemblyInfo.obj ACM.Wipt.WindowsInstaller.res
 	link /OUT:ACM.Wipt.WindowsInstaller.dll /INCREMENTAL:NO /NOLOGO /DLL /FIXED:No nochkclr.obj mscoree.lib msi.lib kernel32.lib ACM.Wipt.WindowsInstaller.obj AssemblyInfo.obj ACM.Wipt.WindowsInstaller.res
-!IF ("$(FRAMEWORKVERSION)"=="v1.1.4322") && !DEFINED(DEBUG)
-	signcode -cn "Special Interest Group for Windows Development" -t "http://timestamp.verisign.com/scripts/timestamp.dll" ACM.Wipt.WindowsInstaller.dll
-!ELSEIFNDEF DEBUG
-	signtool sign /n "Special Interest Group for Windows Development" ACM.Wipt.WindowsInstaller.dll
+!IFNDEF DEBUG
+	signtool sign /n "Special Interest Group for Windows Development" /t "http://timestamp.verisign.com/scripts/timestamp.dll" ACM.Wipt.WindowsInstaller.dll
 !ENDIF
 
 ACM.Wipt.WindowsInstaller.obj: StdAfx.pch ACM.Wipt.WindowsInstaller.cpp
