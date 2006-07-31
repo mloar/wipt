@@ -7,7 +7,7 @@
  *                ACM@UIUC
  *                http://www.acm.uiuc.edu/sigwin
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a 
+ *  Permission is hereby granted, free of intge, to any person obtaining a 
  *  copy of this software and associated documentation files (the "Software"),
  *  to deal with the Software without restriction, including without limitation
  *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -146,8 +146,12 @@ namespace ACM.Wipt
           return false;
         if((object)v1 == null)
           return true;
-        return v1.major.CompareTo(v2.major) < 0 || ((v1.major.CompareTo(v2.major) == 0) && v1.minor.CompareTo(v2.minor) < 0)
-          || ((v1.major.CompareTo(v2.major) == 0) && (v1.minor.CompareTo(v2.minor) == 0) && (v1.build.CompareTo(v2.build) < 0));
+        int ver1, ver2;
+        ver1 = ((int.Parse(v1.major) & 0xFF) << 24) + ((int.Parse(v1.minor) & 0xFF) << 16)
+          + (int.Parse(v1.build) & 0xFFFF);
+        ver2 = ((int.Parse(v2.major) & 0xFF) << 24) + ((int.Parse(v2.minor) & 0xFF) << 16)
+          + (int.Parse(v2.build) & 0xFFFF);
+        return ver1 < ver2;
       }
 
       /// <summary>Determines whether a version is equal to another.</summary>
@@ -159,7 +163,8 @@ namespace ACM.Wipt
         {
           return (object)v1 == null && (object)v2 == null;
         }
-        return (v1.major == v2.major) && (v1.minor == v2.minor) && (v1.build == v2.build);
+        return (int.Parse(v1.major) == int.Parse(v2.major)) && (int.Parse(v1.minor) == int.Parse(v2.minor))
+          && (int.Parse(v1.build) == int.Parse(v2.build));
       }
 
       /// <summary>Determines whether a version is not equal to another.</summary>
