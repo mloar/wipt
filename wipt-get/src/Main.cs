@@ -277,7 +277,7 @@ namespace ACM.Wipt
       {
         if(p == "")
           continue;
-        Version instVersion = new Version("0","0","0");
+        Version instVersion = new Version("0.0.0");
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
@@ -324,7 +324,7 @@ namespace ACM.Wipt
     {
       if(p == "")
         return true;
-      Version instVersion = new Version("0","0","0");
+      Version instVersion = new Version("0.0.0");
       string[] parts = p.Split('=');
       if(parts.Length > 1)
       {
@@ -683,9 +683,8 @@ namespace ACM.Wipt
         {
 
           string[] ver = new string[3];
-          ver = ApplicationDatabase.getInstalledVersion(productCode).Split('.');
+          Version v = new Version(ApplicationDatabase.getInstalledVersion(productCode));
 
-          Version v = new Version(ver[0], ver[1], ver[2]);
           if(v >= minVersion && v <= maxVersion)
           {
             return true;

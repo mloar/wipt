@@ -99,150 +99,6 @@ namespace ACM.Wipt
     }
 
   /// <remarks>
-  /// The Version object represents a Major.Minor.Build version string.
-  /// </remarks>
-  [Serializable()]
-    public class Version : IComparable
-    {
-      /// <summary>The major version number.</summary>
-      private string major;
-      /// <summary>The minor version number.</summary>
-      private string minor;
-      /// <summary>The build version number.</summary>
-      private string build;
-      /// <summary>A constructor for the Version class.</summary>
-      /// <param name="Major">The major version number.</param>
-      /// <param name="Minor">The minor version number.</param>
-      /// <param name="Build">The build version number.</param>
-      public Version(string Major, string Minor, string Build)
-      {
-        major = Major;
-        minor = Minor;
-        build = Build;
-      }
-      /// <summary>A constructor for the Version class.</summary>
-      /// <param name="VerString">A dotted version string.</param>
-      public Version(string VerString)
-      {
-        string[] ver = VerString.Split('.');
-        if(ver[0] != null)
-          major = ver[0];
-        if(ver[1] != null)
-          minor = ver[1];
-        if(ver[2] != null)
-          build = ver[2];
-      }
-      /// <returns>A dotted version string.</returns>
-      public override string ToString()
-      {
-        return string.Format("{0}.{1}.{2}",major,minor,build);
-      }
-      /// <summary>Determines whether a version is less than another.</summary>
-      /// <param name="v1">First version.</param>
-      /// <param name="v2">Second version.</param>
-      public static bool operator < (Version v1, Version v2)
-      {
-        if((object)v2 == null)
-          return false;
-        if((object)v1 == null)
-          return true;
-        int ver1, ver2;
-        ver1 = ((int.Parse(v1.major) & 0xFF) << 24) + ((int.Parse(v1.minor) & 0xFF) << 16)
-          + (int.Parse(v1.build) & 0xFFFF);
-        ver2 = ((int.Parse(v2.major) & 0xFF) << 24) + ((int.Parse(v2.minor) & 0xFF) << 16)
-          + (int.Parse(v2.build) & 0xFFFF);
-        return ver1 < ver2;
-      }
-
-      /// <summary>Determines whether a version is equal to another.</summary>
-      /// <param name="v1">First version.</param>
-      /// <param name="v2">Second version.</param>
-      public static bool operator == (Version v1, Version v2)
-      {
-        if((object)v1 == null || (object)v2 == null)
-        {
-          return (object)v1 == null && (object)v2 == null;
-        }
-        return (int.Parse(v1.major) == int.Parse(v2.major)) && (int.Parse(v1.minor) == int.Parse(v2.minor))
-          && (int.Parse(v1.build) == int.Parse(v2.build));
-      }
-
-      /// <summary>Determines whether a version is not equal to another.</summary>
-      /// <param name="v1">First version.</param>
-      /// <param name="v2">Second version.</param>
-      public static bool operator != (Version v1, Version v2)
-      {
-        return !(v1 == v2);
-      }
-
-      /// <summary>Determines whether a version is greater than another.</summary>
-      /// <param name="v1">First version.</param>
-      /// <param name="v2">Second version.</param>
-      public static bool operator > (Version v1, Version v2)
-      {
-        return !((v1 < v2) || (v1 == v2));
-      }
-
-      /// <summary>
-      /// Determines whether a version is greater than or equal to another.
-      /// </summary>
-      /// <param name="v1">First version.</param>
-      /// <param name="v2">Second version.</param>
-      public static bool operator >= (Version v1, Version v2)
-      {
-        return !(v1 < v2);
-      }
-
-      /// <summary>
-      /// Determines whether a version is less than or equal to another.
-      /// </summary>
-      /// <param name="v1">First version.</param>
-      /// <param name="v2">Second version.</param>
-      public static bool operator <= (Version v1, Version v2)
-      {
-        return !(v1 > v2);
-      }
-
-      /// <summary>
-      /// Determines whether a version is equal to an object.
-      /// </summary>
-      /// <param name="o">Object for comparison.</param>
-      public override bool Equals(object o)
-      {
-        if(!(o is Version))
-          return false;
-
-        Version v = (Version) o;
-        return this == v;
-      }
-      
-      /// <summary>
-      /// Provides a value suitable for hashing.
-      /// </summary>
-      public override int GetHashCode()
-      {
-        return int.Parse(build) * 100000 + int.Parse(minor) * 100 + int.Parse(major);
-      }
-
-      /// <summary>
-      /// IComparable.CompareTo implementation.
-      /// </summary>
-      public int CompareTo(object obj)
-      {
-        if(obj is Version)
-        {
-          Version ver = (Version) obj;
-          if(this < ver)
-            return -1;
-          if(this == ver)
-            return 0;
-          return 1;
-        }
-
-        throw new ArgumentException("object is not a Version");    
-      }
-    }
-  /// <remarks>
   /// The Patch class represents a patch.
   /// </remarks>
   [Serializable()]
@@ -556,8 +412,8 @@ namespace ACM.Wipt
                   {
                     case "StableVersion":
                       p.stableVersion = new Version(
-                          e.GetAttribute("Major"),
-                          e.GetAttribute("Minor"),
+                          e.GetAttribute("Major") + "." +
+                          e.GetAttribute("Minor") + "." +
                           e.GetAttribute("Build")
                           );
                     break;
@@ -572,14 +428,14 @@ namespace ACM.Wipt
                       {
                         case "MinVersion":
                           q.minVersion = new Version(
-                              n.GetAttribute("Major"),
-                              n.GetAttribute("Minor"),
+                              n.GetAttribute("Major") + "." +
+                              n.GetAttribute("Minor") + "." +
                               n.GetAttribute("Build"));
                         break;
                         case "MaxVersion":
                           q.maxVersion = new Version(
-                              n.GetAttribute("Major"),
-                              n.GetAttribute("Minor"),
+                              n.GetAttribute("Major") + "." +
+                              n.GetAttribute("Minor") + "." +
                               n.GetAttribute("Build"));
                         break;
                         case "URL":
@@ -637,8 +493,8 @@ namespace ACM.Wipt
                           {
                             case "Version":
                               a.version = new Version(
-                                t.GetAttribute("Major"),
-                                t.GetAttribute("Minor"),
+                                t.GetAttribute("Major") + "." +
+                                t.GetAttribute("Minor") + "." +
                                 t.GetAttribute("Build")
                                 );
                             break;
