@@ -115,6 +115,12 @@ namespace ACM.Wipt
             case "remove":
               Remove(packages.Split(','));
             break;
+            case "download":
+              foreach(string package in packages.Split(','))
+              {
+                success = Download(package) && success;
+              }
+            break;
             case "show":
               List();
             break;
@@ -188,7 +194,7 @@ namespace ACM.Wipt
           {
             if((transform.minVersion == null || instVersion >= transform.minVersion) && 
                 (transform.maxVersion == null || instVersion <= transform.maxVersion))
-              properties = transform.URL + ";";
+              properties += transform.URL + ";";
           }
           properties += " ";
         }
@@ -286,7 +292,7 @@ namespace ACM.Wipt
           Product product = Library.GetProduct(parts[0]);
           if(product == null)
           {
-            Console.WriteLine("Could not find product " + parts[0]);
+            Console.Error.WriteLine("Could not find product " + parts[0]);
             continue;
           }
 
@@ -312,6 +318,61 @@ namespace ACM.Wipt
           Console.WriteLine(e.Message);
         }
       }
+    }
+
+    private static bool Download(string p)
+    {
+      if(p == "")
+        return true;
+      Version instVersion = new Version("0","0","0");
+      string[] parts = p.Split('=');
+      if(parts.Length > 1)
+      {
+        instVersion = new Version(parts[1]);
+      }
+      else
+      {
+        instVersion = null;
+      }
+      try
+      {
+        Product product = Library.GetProduct(parts[0]);
+        if(product == null)
+        {
+          Console.Error.WriteLine("Could not find product " + parts[0]);
+          return false;
+        }
+
+        string URL = "";
+        if(instVersion == null)
+          instVersion = product.stableVersion;
+        foreach(Package package in product.packages)
+        {
+          if(package.version == instVersion)
+          {
+            URL = package.URL;
+            break;
+          }
+        }
+
+        if(URL == "")
+        {
+          Console.Error.WriteLine("No package listed for specified version of "
+              + product.name + ".  Contact the repository maintainer.");
+          return false;
+        }
+
+        string[] URLParts = URL.Split('/');
+        WebClient wc = new WebClient();
+        wc.DownloadFile(URL, Environment.CurrentDirectory + "\\" + URLParts[URLParts.Length - 1]);
+      }
+      catch(Exception e)
+      {
+        Console.Error.WriteLine(e.Message);
+        return false;
+      }
+
+      return true;
     }
 
     public static bool ApplyPatches(Patch[] patches, Guid productCode)
@@ -371,10 +432,11 @@ namespace ACM.Wipt
         COMMANDS
         install                     Install product(s)
         remove                      Remove product(s)
+        show                        List all products and packages
         update                      Download package lists from repositories
         upgrade                     Perform small updates and minor upgrades
         dist-upgrade                Perform major upgrades to stable version
-        show                        List all products and packages
+        download                    Just download the MSI to current directory
         ";
       Console.WriteLine(usage);
     }
@@ -463,7 +525,6 @@ namespace ACM.Wipt
 
                 ApplyPatches(p.patches, prod);
               }
-              break;
             }
           }
 
@@ -537,8 +598,7 @@ namespace ACM.Wipt
                 string installstring="";
                 if(p.stableVersion == k.version)
                   installstring = "(stable)";
-                if(ApplicationDatabase.getProductState(k.productCode)
-                    == InstallState.Default)
+                if(IsInstalled(p.name, k.version, k.version))
                   installstring += "(installed)";
                 Console.WriteLine("  v{0} {1}", k.version.ToString(), installstring);
               }

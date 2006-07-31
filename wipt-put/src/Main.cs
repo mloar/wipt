@@ -67,7 +67,7 @@ namespace ACM.Wipt
             }
             else
             {
-              Console.Error.WriteLine("Error: invalid command specified");
+              Console.Error.WriteLine("ERROR: invalid command specified");
               Usage();
               return;
             }
@@ -87,7 +87,7 @@ namespace ACM.Wipt
                 msiurl = arg;
               else
               {
-                Console.Error.WriteLine("Error: too many arguments");
+                Console.Error.WriteLine("ERROR: too many arguments");
                 Usage();
                 return;
               }
@@ -102,7 +102,7 @@ namespace ACM.Wipt
                 supporturl = arg;
               else
               {
-                Console.Error.WriteLine("Error: too many arguments");
+                Console.Error.WriteLine("ERROR: too many arguments");
                 Usage();
                 return;
               }
@@ -117,12 +117,20 @@ namespace ACM.Wipt
           case "addpackage":
             if(repofile == "" || msiurl == "")
             {
-              Console.Error.WriteLine("Error: not enough parameters");
+              Console.Error.WriteLine("ERROR: not enough parameters");
               Usage();
               return;
             }
           
-            theRepo = new Repository(repofile);
+            try
+            {
+              theRepo = new Repository(repofile);
+            }
+            catch(Exception)
+            {
+              Console.Error.WriteLine("ERROR: could not open repository file");
+              return;
+            }
 
             WebClient wc = new WebClient();
             try
@@ -136,7 +144,7 @@ namespace ACM.Wipt
             }
             catch(Exception)
             {
-              Console.Error.WriteLine("ERROR: Could not open MSI database.");
+              Console.Error.WriteLine("ERROR: could not open MSI database");
               return;
             } 
             theRepo.Save(repofile);
@@ -144,15 +152,23 @@ namespace ACM.Wipt
           case "create":
             if(repofile == "" || maintainer == "" || supporturl == "")
             {
-              Console.Error.WriteLine("Error: not enough parameters");
+              Console.Error.WriteLine("ERROR: not enough parameters");
               Usage();
               return;
             }
-          
-            Repository.Create(repofile, maintainer, supporturl);
+            
+            try
+            {
+              Repository.Create(repofile, maintainer, supporturl);
+            }
+            catch(Exception)
+            {
+              Console.Error.WriteLine("ERROR: Could not create repository file.");
+              return;
+            }
           break;
           default:
-            Console.Error.WriteLine("Error: no command specified");
+            Console.Error.WriteLine("ERROR: no command specified");
             Usage();
           break;
         }
