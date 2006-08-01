@@ -1,7 +1,7 @@
 .SILENT:
 
-wipt-put.exe: src\Main.cs src\AssemblyInfo.cs res\App.ico ..\System.Installer\ACM.Wipt.WindowsInstaller.dll ..\WiptLib\WiptLib.dll
-	csc /nologo $(DEBUG) /optimize /Win32Icon:res\App.ico /r:..\System.Installer\ACM.Wipt.WindowsInstaller.dll /r:..\WiptLib\WiptLib.dll /out:wipt-put.exe src\Main.cs src\AssemblyInfo.cs
+wipt-put.exe: src\Main.cs src\AssemblyInfo.cs res\App.ico ..\System.Installer\ACM.Wipt.WindowsInstaller.dll ..\WiptLib\WiptLib.dll ..\AssemblyVersion.cs
+	csc /nologo $(DEBUG) /optimize /Win32Icon:res\App.ico /r:..\System.Installer\ACM.Wipt.WindowsInstaller.dll /r:..\WiptLib\WiptLib.dll /out:wipt-put.exe src\Main.cs src\AssemblyInfo.cs ..\AssemblyVersion.cs
 !IFNDEF DEBUG
 	signtool sign /n "Special Interest Group for Windows Development" /t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt-put.exe
 !ENDIF

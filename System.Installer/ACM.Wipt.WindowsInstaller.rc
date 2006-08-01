@@ -1,16 +1,7 @@
-// Microsoft Visual C++ generated resource script.
-//
-#include "resource.h"
-
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
 #include "afxres.h"
 
-/////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
+#define GETVERSTR(x) #x
+#define GETEXPVERSTR(x) GETVERSTR(x)
 
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
@@ -21,40 +12,12 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
 
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION SYSINSTFVER
- PRODUCTVERSION WIPTFVER
+ FILEVERSION WIPTVER
+ PRODUCTVERSION WIPTVER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,12 +34,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "ACM@UIUC"
             VALUE "FileDescription", "ACM.Wipt.WindowsInstaller Assembly DLL"
-            VALUE "FileVersion", SYSINSTVER
+            VALUE "FileVersion", GETEXPVERSTR(WIPTVER)
             VALUE "InternalName", "System.Installer"
             VALUE "LegalCopyright", "Copyright (C) 2006 ACM@UIUC.  All rights reserved."
             VALUE "OriginalFilename", "ACM.Wipt.WindowsInstaller.dll"
             VALUE "ProductName", "Windows Installer Package Tool"
-            VALUE "ProductVersion", WIPTVER
+            VALUE "ProductVersion", GETEXPVERSTR(WIPTVER)
         END
     END
     BLOCK "VarFileInfo"
@@ -87,16 +50,3 @@ END
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
-
-
-
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
-
