@@ -217,6 +217,12 @@ namespace ACM.Wipt
               + product.name + ".  Contact the repository maintainer.");
           return false;
         }
+        else if(URL.StartsWith("file:"))
+        {
+          // The Windows Installer system does not support file: URLs.  Don't know why.
+          URL = URL.Substring(8);
+          URL = URL.Replace("/", "\\");
+        }
 
         InstallState state = ApplicationDatabase.getProductState(productCode);
         if(state != InstallState.Removed && state != InstallState.Absent 

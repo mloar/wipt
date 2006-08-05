@@ -8,6 +8,9 @@
 		<Binary Id="MSVBDPCADLL" SourceFile="InstallUtil\MSVBDPCADLL.ibd" />
     <Binary Id="VSDNETCFG" SourceFile="InstallUtil\VSDNETCFG.ibd" />
 		<Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
+    <UIRef Id="WixUI_InstallDir" />
+    <CustomAction Id="SetTargetDir" Property="TARGETDIR" Value="[ProgramFilesFolder]" />
+    <WixVariable Id="WixUILicenseRtf" Value="C:\Users\mloar2\Documents\Projects\Wipt\LICENSE.rtf" />
 		<Directory Id="TARGETDIR" Name="SourceDir">
 				<Directory Id="ACMDir" Name="ACM">
 					<Directory Id="INSTALLDIR" Name="Wipt">
@@ -67,6 +70,7 @@
 		</Feature>
 	  <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
 		<Property Id="NEWERPRODUCTFOUND" Secure="yes" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
 		<Upgrade Id="C1781722-8046-4A2A-8419-5CBC9616220C">
 			<UpgradeVersion Minimum="$(var.ProductVersion)" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" IncludeMinimum="yes" />
 			<UpgradeVersion Minimum="1.0.0" Maximum="$(var.ProductVersion)" Property="PREVIOUSVERSIONSINSTALLED" IncludeMinimum="yes" />
@@ -74,8 +78,12 @@
 		<CustomAction Id="SetPrereqs" BinaryKey="MSVBDPCADLL" DllEntry="CheckFX" />
 		<InstallExecuteSequence>
 			<Custom Action="SetPrereqs" Before="AppSearch" />
+      <Custom Action="SetTargetDir" Before="CostFinalize" />
       <MigrateFeatureStates />
       <RemoveExistingProducts After="InstallFinalize" />
 		</InstallExecuteSequence>
+    <InstallUISequence>
+      <Custom Action="SetTargetDir" Before="CostFinalize" />
+    </InstallUISequence>
 	</Product>
 </Wix>

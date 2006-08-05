@@ -34,9 +34,10 @@ AssemblyVersion.cs: Wipt.ver
 
 wipt.msi: all
 	candle /nologo /dProductVersion=$(ProductVersion) wipt.wxs
-	light /nologo wipt.wixobj
+	light /nologo -ext WixUIExtension -cultures:en-us wipt.wixobj
+!IFNDEF DEBUG
 	signtool sign /n "Special Interest Group for Windows Development" /t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt.msi
-
+!ENDIF
 clean:
 	-rmdir /s /q bin 2> nul
 	-del Wipt.msi Wipt.wixobj Wipt.ncb AssemblyVersion.cs 2> nul
