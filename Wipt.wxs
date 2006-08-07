@@ -78,12 +78,12 @@
 		<CustomAction Id="SetPrereqs" BinaryKey="MSVBDPCADLL" DllEntry="CheckFX" />
 		<InstallExecuteSequence>
 			<Custom Action="SetPrereqs" Before="AppSearch" />
-      <Custom Action="SetTargetDir" Before="CostFinalize" />
+      <Custom Action="SetTargetDir" Before="CostFinalize">NOT REMOVE AND NOT RESUME AND NOT TARGETDIR</Custom>
       <MigrateFeatureStates />
       <RemoveExistingProducts After="InstallFinalize" />
 		</InstallExecuteSequence>
     <InstallUISequence>
-      <Custom Action="SetTargetDir" Before="CostFinalize" />
+      <Custom Action="SetTargetDir" Before="CostFinalize">NOT REMOVE AND NOT RESUME AND NOT TARGETDIR</Custom>
     </InstallUISequence>
 	</Product>
 </Wix>

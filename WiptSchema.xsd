@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema targetNamespace="urn:xmlns:sigwin:wipt-get:repository" xmlns="urn:xmlns:sigwin:wipt-get:repository"
-	xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="0.8">
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="0.85">
 	<xs:element name="Repository">
 		<xs:complexType>
 			<xs:sequence>
@@ -34,6 +34,8 @@
 			<xs:element name="URL" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
 		</xs:sequence>
 		<xs:attribute name="ProductCode" type="xs:string" use="required" />
+    <xs:attribute name="Platform" type="ProcessorType" />
+    <xs:attribute name="LanguageId" type="xs:integer" />
 	</xs:complexType>
   <xs:complexType name="Transform">
     <xs:sequence>
@@ -50,4 +52,11 @@
     <xs:attribute name="Name" type="xs:string" use="required" />
     <xs:attribute name="PatchCode" type="xs:string" use="required" />
   </xs:complexType>
+  <xs:simpleType name="ProcessorType">
+    <xs:restriction base='xs:NMTOKEN'>
+        <xs:enumeration value="x86"/>
+        <xs:enumeration value="x64"/>
+        <xs:enumeration value="ia64" />
+    </xs:restriction>
+  </xs:simpleType>
 </xs:schema>

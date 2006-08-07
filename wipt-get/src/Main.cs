@@ -302,6 +302,19 @@ namespace ACM.Wipt
             continue;
           }
 
+          int installnum = GetNumberofInstalledVersions(product.upgradeCode);
+          if(installnum == 0)
+          {
+            Console.Error.WriteLine("ERROR: {0} is not installed", product.name);
+            continue;
+          }
+          else if(installnum > 1 && instVersion == null)
+          {
+            Console.Error.WriteLine("ERROR: More than one version of {0} is installed.  A version must be specified.",
+                product.name);
+            continue;
+          }
+
           if(instVersion == null ? IsInstalled(product.name) : IsInstalled(product.name, instVersion, instVersion))
           {
             Console.Write("Removing "+ product.name + "... ");
@@ -317,7 +330,7 @@ namespace ACM.Wipt
             Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
           }
           else
-            Console.WriteLine(product.name + " (or the specified version of it) is not installed");
+            Console.Error.WriteLine("ERROR: The specified version of {0} is not installed", product.name);
         }
         catch(WiptException e)
         {
@@ -635,14 +648,25 @@ namespace ACM.Wipt
         if(version == null || version == new Version(ApplicationDatabase.getInstalledVersion(ret)))
         {
           return ret;
-          }
-          else
-          {
-            i++;
-          }
         }
+        else
+        {
+          i++;
+        }
+      }
 
       return Guid.Empty;
+    }
+
+    private static int GetNumberofInstalledVersions(Guid upgradeCode)
+    {
+      int i = 0;
+      while(ApplicationDatabase.findProductByUpgradeCode(upgradeCode, i) != Guid.Empty)
+      {
+        i++;
+      }
+      
+      return i;
     }
 
     private static bool IsInstalled(string product)
