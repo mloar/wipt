@@ -85,6 +85,6 @@ using namespace System::Runtime::CompilerServices;
 //       documentation for more information on this.
 //
 [assembly:AssemblyDelaySignAttribute(false)];
-[assembly:AssemblyKeyFileAttribute("keyfile.snk")];
+[assembly:AssemblyKeyFileAttribute("..\\keys\\system.installer.snk")];
 [assembly:AssemblyKeyNameAttribute("")];
 

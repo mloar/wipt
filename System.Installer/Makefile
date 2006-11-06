@@ -2,23 +2,38 @@
 
 !INCLUDE "..\Wipt.ver"
 
-ACM.Wipt.WindowsInstaller.dll: ACM.Wipt.WindowsInstaller.obj AssemblyInfo.obj ACM.Wipt.WindowsInstaller.res
-	link /OUT:ACM.Wipt.WindowsInstaller.dll /INCREMENTAL:NO /NOLOGO /DLL /FIXED:No nochkclr.obj mscoree.lib msi.lib kernel32.lib ACM.Wipt.WindowsInstaller.obj AssemblyInfo.obj ACM.Wipt.WindowsInstaller.res
-!IFNDEF DEBUG
+CFLAGS=/nologo /D "WIN32" /D "_WINDLL" /D "_MBCS" /GS /FU "mscorlib.dll" /FU "System.dll"
+LFLAGS=/NOLOGO
+RCFLAGS=/DWIPTVER=$(FileVersion)
+!IFNDEF NODEBUG
+CFLAGS=$(CFLAGS) /Zi
+LFLAGS=$(LFLAGS) /DEBUG
+RCFLAGS=$(RCFLAGS) /D_DEBUG
+!ENDIF
+
+!IF "$(TARGET_FRAMEWORK)" != "1.1"
+CFLAGS=$(CFLAGS) /clr:oldSyntax
+!ELSE
+CFLAGS=$(CFLAGS) /clr
+!ENDIF
+
+ACM.Wipt.WindowsInstaller.dll: ACM.Wipt.WindowsInstaller.obj AssemblyInfo.obj ACM.Wipt.WindowsInstaller.res stdafx.obj
+	link $(LFLAGS) /OUT:ACM.Wipt.WindowsInstaller.dll /INCREMENTAL:NO /DLL /FIXED:No nochkclr.obj mscoree.lib msi.lib wintrust.lib kernel32.lib ACM.Wipt.WindowsInstaller.obj AssemblyInfo.obj stdafx.obj ACM.Wipt.WindowsInstaller.res
+!IFDEF NODEBUG
 	signtool sign /n "Special Interest Group for Windows Development" /t "http://timestamp.verisign.com/scripts/timestamp.dll" ACM.Wipt.WindowsInstaller.dll
 !ENDIF
 
 ACM.Wipt.WindowsInstaller.obj: StdAfx.pch ACM.Wipt.WindowsInstaller.cpp ACM.Wipt.WindowsInstaller.h
-	cl /D "WIN32" /D "_WINDLL" /D "_MBCS" /MT /GS /Yu"stdafx.h" /nologo /c /Zi /clr /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\mscorlib.dll" /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll" ACM.Wipt.WindowsInstaller.cpp
+	cl $(CFLAGS) /c /Yu"stdafx.h" ACM.Wipt.WindowsInstaller.cpp
 
 AssemblyInfo.obj: StdAfx.pch AssemblyInfo.cpp
-	cl /D "WIN32" /D "_WINDLL" /D "_MBCS" /MT /GS  /nologo /c /Zi /clr /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\mscorlib.dll" /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll" AssemblyInfo.cpp
+	cl $(CFLAGS) /c AssemblyInfo.cpp
 
 ACM.Wipt.WindowsInstaller.res: ACM.Wipt.WindowsInstaller.rc resource.h
-	rc /DWIPTVER=$(FileVersion) ACM.Wipt.WindowsInstaller.rc
+	rc $(RCFLAGS) ACM.Wipt.WindowsInstaller.rc
 
 stdafx.pch: StdAfx.cpp StdAfx.h
-	cl /D "WIN32" /D "_WINDLL" /D "_MBCS" /MT /GS /Yc"stdafx.h" /nologo /c /Zi /clr /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\mscorlib.dll" /FU "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll" StdAfx.cpp
+	cl $(CFLAGS) /c /Yc"stdafx.h" StdAfx.cpp
 
 clean:
-	-del ACM.Wipt.WindowsInstaller.dll ACM.Wipt.WindowsInstaller.obj stdafx.pch stdafx.obj vc70.pdb vc70.idb AssemblyInfo.obj ACM.Wipt.WindowsInstaller.res ACM.Wipt.WindowsInstaller.aps
+	-del *.dll *.obj *.pch *.pdb *.idb *.res *.aps *.manifest

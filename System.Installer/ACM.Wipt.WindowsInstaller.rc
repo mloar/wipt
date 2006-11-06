@@ -1,4 +1,4 @@
-#include "afxres.h"
+#include <winnt.h>
 
 #define GETVERSTR(x) #x
 #define GETEXPVERSTR(x) GETVERSTR(x)
@@ -6,7 +6,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
@@ -48,5 +47,4 @@ BEGIN
     END
 END
 
-#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

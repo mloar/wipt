@@ -423,7 +423,7 @@ retry:
         {
           return ERROR_NOT_ENOUGH_MEMORY;
         }
-        setInternalUI(None);
+        
         unsigned int ret = MsiApplyPatch(path, NULL, INSTALLTYPE_DEFAULT, L"REINSTALL=ALL");
         Marshal::FreeHGlobal(path);
         return ret;
@@ -449,7 +449,7 @@ retry:
         {
           return ERROR_NOT_ENOUGH_MEMORY;
         }
-        setInternalUI(None);
+        
         unsigned int ret = MsiApplyPatch(path, code, INSTALLTYPE_SINGLE_INSTANCE, L"REINSTALL=ALL");
         Marshal::FreeHGlobal(path);
         Marshal::FreeHGlobal(code);
@@ -472,7 +472,7 @@ retry:
         {
           return ERROR_NOT_ENOUGH_MEMORY;
         }
-        setInternalUI(None);
+        
         unsigned int ret = MsiInstallProduct(path, line);
         Marshal::FreeHGlobal(path);
         Marshal::FreeHGlobal(line);
@@ -507,8 +507,8 @@ retry:
 
         try
         {
-          String*  temp = String::Concat(/*" /x {"*/"{",productCode.ToString()->ToUpper());
-          temp = String::Concat(temp,/*"} /qn"*/ "}");
+          String*  temp = String::Concat("{", productCode.ToString()->ToUpper());
+          temp = String::Concat(temp, "}");
           code = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(temp)));
         }
         catch(ArgumentException*)
@@ -520,7 +520,7 @@ retry:
           return ERROR_NOT_ENOUGH_MEMORY;
         }
 
-        setInternalUI(None);
+        
         UINT ret = MsiConfigureProduct(code, 0, INSTALLSTATE_ABSENT);
 
         return ret;
@@ -611,6 +611,39 @@ retry:
         return GetProperty(L"UpgradeCode");
       }
 
+      Guid MsiDatabase::get_PatchCode()
+      {
+        PMSIHANDLE hSummary;
+        if(MsiGetSummaryInformation(msiHandle, NULL, 0, &hSummary) != ERROR_SUCCESS)
+          return Guid::Empty;
+
+        UINT uiDataType;
+        INT iValue;
+        FILETIME ftValue;
+
+        LPWSTR buffer;
+        DWORD len = 1024;
+        try
+        {
+          buffer = static_cast<LPWSTR>(static_cast<void*>(Marshal::AllocHGlobal(1024 * sizeof(wchar_t))));
+        }
+        catch(OutOfMemoryException*)
+        {
+          return Guid::Empty;
+        }
+        if(MsiSummaryInfoGetProperty(hSummary, 9 /* PID_REVNUMBER */, &uiDataType, &iValue, &ftValue, buffer, &len) != 
+            ERROR_SUCCESS)
+        {
+          Marshal::FreeHGlobal(buffer);
+          return Guid::Empty;
+        }
+        
+        String* value = Marshal::PtrToStringAuto(buffer);
+        Marshal::FreeHGlobal(buffer);
+
+        return value;
+      }
+
       String* MsiDatabase::get_Manufacturer()
       {
         return GetProperty(L"Manufacturer");
@@ -628,39 +661,25 @@ retry:
 
       String* MsiDatabase::GetProperty(LPCWSTR property)
       {
-        MSIHANDLE view;
+        PMSIHANDLE view;
         if(MsiDatabaseOpenView(msiHandle, L"SELECT `Value` FROM `Property` WHERE `Property`.`Property`= ?", &view)
             != ERROR_SUCCESS)
         {
           return NULL;
         }
 
-        MSIHANDLE params;
+        PMSIHANDLE params;
         params = MsiCreateRecord(1);
 
         if(MsiRecordSetString(params, 1, property) != ERROR_SUCCESS)
-        {
-          MsiCloseHandle(params);
-          MsiCloseHandle(view);
           return NULL;
-        }
 
         if(MsiViewExecute(view, params) != ERROR_SUCCESS)
-        {
-          MsiCloseHandle(params);
-          MsiCloseHandle(view);
           return NULL;
-        }
 
-        MsiCloseHandle(params);
-
-        MSIHANDLE rec;
+        PMSIHANDLE rec;
         if(MsiViewFetch(view, &rec) != ERROR_SUCCESS)
-        {
-          MsiCloseHandle(view);
           return NULL;
-        }
-
 
         LPWSTR buffer;
         DWORD len = 1024;
@@ -670,20 +689,14 @@ retry:
         }
         catch(OutOfMemoryException*)
         {
-          MsiCloseHandle(rec);
-          MsiCloseHandle(view);
           return NULL;
         }
 
         if(MsiRecordGetString(rec, 1, buffer, &len) != ERROR_SUCCESS)
         {
-          MsiCloseHandle(rec);
-          MsiCloseHandle(view);
+          Marshal::FreeHGlobal(buffer);
           return NULL;
         }
-
-        MsiCloseHandle(rec);
-        MsiCloseHandle(view);
 
         String* value = Marshal::PtrToStringAuto(buffer);
         Marshal::FreeHGlobal(buffer);

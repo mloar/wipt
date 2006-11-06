@@ -80,6 +80,7 @@ namespace ACM
           __property String* get_ProductName();
           __property Guid get_ProductCode();
           __property Guid get_UpgradeCode();
+          __property Guid get_PatchCode();
           __property String* get_Manufacturer();
           __property String* get_ProductVersion();
           __property String* get_SupportURL();
