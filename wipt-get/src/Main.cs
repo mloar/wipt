@@ -35,21 +35,23 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Xml;
 using ACM.Wipt.WindowsInstaller;
 using Microsoft.Win32;
 
 namespace ACM.Wipt
 {
-  public class WiptGetter
+  public class wipt_get
   {
     [STAThread]
-      public static void Main(string[] args)
+      public static int Main(string[] args)
       {
         try
         {
           bool ignoretransforms = false;
           bool ignorepatches = false;
+          bool reinstall = false;
           bool peruser = false;
           string targetdir = "";
           string command = "";
@@ -78,11 +80,17 @@ namespace ACM.Wipt
                   {
                     Console.Error.WriteLine("You must specify a directory when using --target-dir");
                     Usage();
-                    return;
+                    return 1;
                   }
                 }
                 else if(command == "")
                   command = arg.ToLower();
+                else if(arg.ToLower().StartsWith("-"))
+                {
+                  Console.Error.WriteLine("Unrecognized option {0}", arg);
+                  Usage();
+                  return 1;
+                }
                 else
                   packages += arg + ",";
               break;
@@ -93,14 +101,14 @@ namespace ACM.Wipt
           {
             Console.Error.WriteLine("Error: no command specified");
             Usage();
-            return;
+            return 1;
           }
 
-          if((command == "install" || command == "remove") && packages == "")
+          if((command == "install" || command == "remove" || command == "download") && packages == "")
           {
             Console.Error.WriteLine("Error: no packages specified");
             Usage();
-            return;
+            return 1;
           }
 
           bool success = true;
@@ -125,24 +133,30 @@ namespace ACM.Wipt
               List();
             break;
             case "upgrade":
-              Upgrade(packages.Split(','), ignoretransforms, ignorepatches, peruser);
-            break;
-            case "dist-upgrade":
-              DistUpgrade(packages.Split(','), ignoretransforms, ignorepatches, peruser, targetdir);
+              Upgrade(packages.Split(','), ignoretransforms, ignorepatches, peruser, targetdir);
             break;
             case "update":
               Update();
+            break;
+            case "copyright":
+              Copyright();
             break;
             default:
               Usage();
             break;
           }
+          if(success)
+            return 0;
+          else
+            return 1;
         }
         catch(Exception e)
         {
           Console.Error.WriteLine(
               "Wipt has encountered a serious problem and is unable to continue.  Please report this to SIGWin.");
+          Console.Error.WriteLine("");
           Console.Error.Write(e.Message + e.StackTrace);
+          return 2;
         }
       }
 
@@ -156,7 +170,7 @@ namespace ACM.Wipt
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
-          instVersion = new Version(parts[1]);
+          instVersion = GetProperVersion(parts[1]);
         }
         Product product = Library.GetProduct(parts[0]);
         if(product == null)
@@ -217,7 +231,7 @@ namespace ACM.Wipt
               + product.name + ".  Contact the repository maintainer.");
           return false;
         }
-        else if(URL.StartsWith("file:"))
+        else if(URL.StartsWith("file://"))
         {
           // The Windows Installer system does not support file: URLs.  Don't know why.
           URL = URL.Substring(8);
@@ -246,12 +260,29 @@ namespace ACM.Wipt
 
         Console.Write("Installing "+ product.name + "... ");
 
+        ApplicationDatabase.setInternalUI(InstallUILevel.None);
         ApplicationDatabase.setProgressHandler(
             new ACM.Wipt.WindowsInstaller.ProgressHandler(
               ProgressHandler));
 
         uint ret;
-        ret = ApplicationDatabase.installProduct(URL, properties);
+        /*string tempy = "";
+        WebClient wc = new WebClient();
+        try
+        {
+          tempy = Environment.GetFolderPath(Environment.SpecialFolder.InternetCache) + "\\wiptget.tmp";
+          System.IO.File.Delete(tempy);
+          wc.DownloadFile(URL, tempy);
+        }
+        catch(Exception e)
+        {
+          Console.Error.WriteLine("ERROR: {0}", e.Message);
+          return false;
+        }
+
+        ret = ApplicationDatabase.checkTrust(tempy); 
+        if(ret == 0)*/
+          ret = ApplicationDatabase.installProduct(URL, properties);
         Console.Write("\x08");
         Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
 
@@ -265,7 +296,10 @@ namespace ACM.Wipt
           }
         }
 
-        if((ret != 0 && ret != 3010) || (ignorepatches || !ApplyPatches(patches, productCode)))
+        if(ret != 0 && ret != 3010)
+          return false;
+
+        if(!(ignorepatches || ApplyPatches(patches, productCode)))
           return false;
 
         return true;
@@ -287,7 +321,7 @@ namespace ACM.Wipt
         string[] parts = p.Split('=');
         if(parts.Length > 1)
         {
-          instVersion = new Version(parts[1]);
+          instVersion = GetProperVersion(parts[1]);
         }
         else
         {
@@ -319,6 +353,7 @@ namespace ACM.Wipt
           {
             Console.Write("Removing "+ product.name + "... ");
 
+            ApplicationDatabase.setInternalUI(InstallUILevel.None);
             ApplicationDatabase.setProgressHandler(
                 new ACM.Wipt.WindowsInstaller.ProgressHandler(
                   ProgressHandler));
@@ -347,7 +382,7 @@ namespace ACM.Wipt
       string[] parts = p.Split('=');
       if(parts.Length > 1)
       {
-        instVersion = new Version(parts[1]);
+        instVersion = GetProperVersion(parts[1]);
       }
       else
       {
@@ -454,10 +489,47 @@ namespace ACM.Wipt
         show                        List all products and packages
         update                      Download package lists from repositories
         upgrade                     Perform small updates and minor upgrades
-        dist-upgrade                Perform major upgrades to stable version
         download                    Just download the MSI to current directory
+        copyright                   Show copyright notice
         ";
       Console.WriteLine(usage);
+    }
+
+    public static void Copyright()
+    {
+      string copyright = @"
+        Copyright (c) 2006 Association for Computing Machinery at the 
+        University of Illinois at Urbana-Champaign.
+        All rights reserved.
+        
+        Developed by: Special Interest Group for Windows Development
+                      ACM@UIUC
+                      http://www.acm.uiuc.edu/sigwin
+        
+        Permission is hereby granted, free of charge, to any person obtaining a 
+        copy of this software and associated documentation files (the " + "\"Software\"" + @"),
+        to deal with the Software without restriction, including without limitation
+        the rights to use, copy, modify, merge, publish, distribute, sublicense,
+        and/or sell copies of the Software, and to permit persons to whom the
+        Software is furnished to do so, subject to the following conditions:
+        
+        Redistributions of source code must retain the above copyright notice, this
+        list of conditions and the following disclaimers.
+        Redistributions in binary form must reproduce the above copyright notice,
+        this list of conditions and the following disclaimers in the documentation
+        and/or other materials provided with the distribution.
+        Neither the names of SIGWin, ACM@UIUC, nor the names of its contributors
+        may be used to endorse or promote products derived from this Software
+        without specific prior written permission. 
+        
+        THE SOFTWARE IS PROVIDED " + "\"AS IS\"" + @", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+        FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+        DEALINGS WITH THE SOFTWARE.";
+      Console.WriteLine(copyright);
     }
 
     public static bool Update()
@@ -489,7 +561,8 @@ namespace ACM.Wipt
       }
     }
 
-    public static void Upgrade(string[] products, bool ignoretransforms, bool ignorepatches, bool peruser)
+    public static void Upgrade(string[] products, bool ignoretransforms, bool ignorepatches, bool peruser,
+        string targetdir)
     {
       Product[] list = new Product[0];
       if(products.Length == 1 && products[0] == "")
@@ -519,82 +592,10 @@ namespace ACM.Wipt
       }
       foreach(Product p in list)
       {
-        int k = 0;
-        Guid prod;
-
-        while((prod = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, k)) != Guid.Empty)
+        if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
         {
-          foreach(Package g in p.packages)
-          {
-            if(g.productCode == prod)
-            {
-              if(new Version(ApplicationDatabase.getInstalledVersion(prod)) < g.version)
-              {
-                Install(p.name + "=" + g.version.ToString(), ignoretransforms, ignorepatches, peruser, "");
-              }
-              else if(!ignorepatches)
-              {
-                foreach(Patch x in p.patches)
-                {
-                  if(IsPatchApplied(x, g.productCode))
-                  {
-                    x.productCodes = new Guid[1]{Guid.Empty};
-                  }
-                }
-
-                ApplyPatches(p.patches, prod);
-              }
-            }
-          }
-
-          k++;
+          Install(p.name + "=" + p.stableVersion.ToString(), ignoretransforms, ignorepatches, peruser, targetdir);
         }
-      }
-    }
-
-    public static void DistUpgrade(string[] products, bool ignoretransforms, bool ignorepatches, bool peruser,
-        string targetdir)
-    {
-      try
-      {
-        Product[] list = new Product[0];
-        if(products.Length == 1 && products[0] == "")
-        {
-          list = Library.GetAll();
-        }
-        else
-        {
-          foreach(string product in products)
-          {
-            if(product != "")
-            {
-              Product p = Library.GetProduct(product);
-              if(p == null)
-              {
-                Console.Error.WriteLine("No such product {0}", product);
-              }
-              else
-              {
-                Product[] nl = new Product[list.Length + 1];
-                Array.Copy(list, nl, list.Length);
-                nl[list.Length] = p;
-                list = nl;
-              }
-            }
-          }
-        }
-
-        foreach(Product p in list)
-        {
-          if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
-          {
-            Install(p.name + "=" + p.stableVersion.ToString(), ignoretransforms, ignorepatches, peruser, targetdir);
-          }
-        }
-      }
-      catch(WiptException e)
-      {
-        Console.Error.Write(e.Message);
       }
     }
 
@@ -645,9 +646,17 @@ namespace ACM.Wipt
       int i = 0;
       while((ret = ApplicationDatabase.findProductByUpgradeCode(upgradecode, i)) != Guid.Empty)
       {
-        if(version == null || version == new Version(ApplicationDatabase.getInstalledVersion(ret)))
+        InstallState state = ApplicationDatabase.getProductState(ret);
+        if(!(state == InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
         {
-          return ret;
+          if(version == null || version == GetProperVersion(ApplicationDatabase.getInstalledVersion(ret)))
+          {
+            return ret;
+          }
+          else
+          {
+            i++;
+          }
         }
         else
         {
@@ -660,39 +669,44 @@ namespace ACM.Wipt
 
     private static int GetNumberofInstalledVersions(Guid upgradeCode)
     {
-      int i = 0;
-      while(ApplicationDatabase.findProductByUpgradeCode(upgradeCode, i) != Guid.Empty)
+      int i = 0, products = 0;
+      Guid productCode;
+      while((productCode = ApplicationDatabase.findProductByUpgradeCode(upgradeCode, i)) != Guid.Empty)
       {
+        InstallState state = ApplicationDatabase.getProductState(productCode);
+        if(!(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
+        {
+          products++;
+        }
+
         i++;
       }
       
-      return i;
+      return products;
+    }
+
+    private static bool IsInstalled(Guid productCode)
+    {
+      InstallState state = ApplicationDatabase.getProductState(productCode);
+      return !(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown);
     }
 
     private static bool IsInstalled(string product)
     {
-      bool installed = false;
       Product p = Library.GetProduct(product);
 
-      if(p == null)
-      {
-        installed = false;
-      }
-      else
+      if(p != null)
       {
         int i = 0;
         Guid productCode;
         while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
         {
-          InstallState state = ApplicationDatabase.getProductState(productCode);
-          if(!(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
-          {
-            installed = true;
-          }
+          if(IsInstalled(productCode))
+            return true;
         }
       }
 
-      return installed;
+      return false;
     }
 
     private static bool IsInstalled(string product, Version minVersion, Version maxVersion)
@@ -707,13 +721,9 @@ namespace ACM.Wipt
       Guid productCode;
       while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
       {
-
-        InstallState state = ApplicationDatabase.getProductState(productCode);
-        if(!(state == InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
+        if(IsInstalled(productCode))
         {
-
-          string[] ver = new string[3];
-          Version v = new Version(ApplicationDatabase.getInstalledVersion(productCode));
+          Version v = GetProperVersion(ApplicationDatabase.getInstalledVersion(productCode));
 
           if(v >= minVersion && v <= maxVersion)
           {
@@ -723,6 +733,17 @@ namespace ACM.Wipt
       }
 
       return false;
+    }
+
+    private static Version GetProperVersion(string version)
+    {
+
+      Regex r = new Regex("^[0-9]{1,2}\\.[0-9]{1,2}\\.[0-9]{1,4}");
+      Match m = r.Match(version);
+      if(m.Success)
+        return new Version(m.Value);
+      else
+        throw new ApplicationException("Invalid Version");
     }
 
     private static int index = 0;
