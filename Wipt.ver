@@ -1,6 +1,6 @@
 VersionMajor=1
 VersionMinor=0
-VersionBuild=12
+VersionBuild=14
 
 ProductVersion=$(VersionMajor).$(VersionMinor).$(VersionBuild)
 AssemblyVersion=$(ProductVersion).*
