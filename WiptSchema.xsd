@@ -13,7 +13,7 @@
 	<xs:complexType name="Product">
 		<xs:sequence>
       <xs:element name="Description" type="xs:string" minOccurs="0" maxOccurs="1" />
-      <xs:element name="StableVersion" type="Version" minOccurs="1" maxOccurs="1" />
+      <xs:element name="StableVersion" type="Version" minOccurs="0" maxOccurs="1" />
 			<xs:element name="Package" type="Package" minOccurs="0" maxOccurs="unbounded" />
       <xs:element name="Transform" type="Transform" minOccurs="0" maxOccurs="unbounded" />
       <xs:element name="Patch" type="Patch" minOccurs="0" maxOccurs="unbounded" />
