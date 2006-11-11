@@ -1,12 +1,11 @@
 <?xml version="1.0" ?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Id="79D9BD6E-E954-490C-B8C4-CC713D74CA3F" UpgradeCode="C1781722-8046-4A2A-8419-5CBC9616220C"
 		Name="Wipt" Language="1033" Version="$(var.ProductVersion)" Manufacturer="ACM@UIUC">
-		<Package Id="????????-????-????-????-????????????" Description="Windows Installer Package Tool" 
-      Comments="Copyright (c) 2006 ACM@UIUC.  See the LICENSE file for copying details."
+		<Package Description="Windows Installer Package Tool" 
+      Comments="This Installer database contains the logic and data required to install Wipt."
 			InstallerVersion="200" Compressed="yes" />
-		<Binary Id="MSVBDPCADLL" SourceFile="InstallUtil\MSVBDPCADLL.ibd" />
-    <Binary Id="VSDNETCFG" SourceFile="InstallUtil\VSDNETCFG.ibd" />
+    <CustomAction Id="ErrNetfx11NotInstalled" Error="[ProductName] requires Microsoft .NET Framework 1.1." />
 		<Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
     <UIRef Id="WixUI_InstallDir" />
     <CustomAction Id="SetTargetDir" Property="TARGETDIR" Value="[ProgramFilesFolder]" />
@@ -75,9 +74,8 @@
 			<UpgradeVersion Minimum="$(var.ProductVersion)" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" IncludeMinimum="yes" />
 			<UpgradeVersion Minimum="1.0.0" Maximum="$(var.ProductVersion)" Property="PREVIOUSVERSIONSINSTALLED" IncludeMinimum="yes" />
 		</Upgrade>
-		<CustomAction Id="SetPrereqs" BinaryKey="MSVBDPCADLL" DllEntry="CheckFX" />
 		<InstallExecuteSequence>
-			<Custom Action="SetPrereqs" Before="AppSearch" />
+      <Custom Action="ErrNetfx11NotInstalled" Before="CostInitialize">NOT NETFX11INSTALLED AND NOT INSTALLED</Custom>
       <Custom Action="SetTargetDir" Before="CostFinalize">NOT REMOVE AND NOT RESUME AND NOT TARGETDIR</Custom>
       <MigrateFeatureStates />
       <RemoveExistingProducts After="InstallFinalize" />
@@ -85,5 +83,8 @@
     <InstallUISequence>
       <Custom Action="SetTargetDir" Before="CostFinalize">NOT REMOVE AND NOT RESUME AND NOT TARGETDIR</Custom>
     </InstallUISequence>
+    <Property Id="NETFX11INSTALLED" Secure="yes">
+      <RegistrySearch Id="Netfx20InstallRegKey" Root="HKLM" Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.1.4322" Name="Install" Type="raw" /> 
+    </Property>
 	</Product>
 </Wix>
