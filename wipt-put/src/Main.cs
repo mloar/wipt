@@ -41,7 +41,7 @@ using Microsoft.Win32;
 
 namespace ACM.Wipt
 {
-  public class WiptPutter
+  public class wipt_put
   {
     [STAThread]
       public static void Main(string[] args)
@@ -61,7 +61,7 @@ namespace ACM.Wipt
         {
           if(command == "")
           {
-            if(arg.ToLower() == "addpackage" || arg.ToLower() == "create")
+            if(arg.ToLower() == "addpackage" || arg.ToLower() == "create" || arg.ToLower() == "test")
             {
               command = arg;
             }
@@ -92,7 +92,7 @@ namespace ACM.Wipt
                 return;
               }
             }
-            else /* if(command == "create") */
+            else if(command == "create")
             {
               if(repofile == "")
                 repofile = arg;
@@ -107,6 +107,17 @@ namespace ACM.Wipt
                 return;
               }
             }
+            else /* if(command == "test") */
+            {
+              if(msiurl == "")
+                msiurl = arg;
+              else
+              {
+                Console.Error.WriteLine("ERROR: too many arguments");
+                Usage();
+                return;
+              }
+            }
           }
         }
 
@@ -114,6 +125,29 @@ namespace ACM.Wipt
 
         switch(command)
         {
+          case "test":
+            if(msiurl== "")
+            {
+              Console.Error.WriteLine("ERROR: not enough parameters");
+              Usage();
+              return;
+            }
+
+            WebClient webc = new WebClient();
+            try
+            {
+              string tempy = Environment.GetFolderPath(Environment.SpecialFolder.InternetCache) + "\\wiptput.tmp";
+              System.IO.File.Delete(tempy);
+              webc.DownloadFile(msiurl, tempy);
+              MsiDatabase db = new MsiDatabase(tempy);
+              Console.WriteLine("MSI Valid");
+            }
+            catch(Exception)
+            {
+              Console.Error.WriteLine("ERROR: could not open MSI database");
+              return;
+            } 
+          break;
           case "addpackage":
             if(repofile == "" || msiurl == "")
             {

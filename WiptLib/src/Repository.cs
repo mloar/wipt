@@ -64,7 +64,8 @@ namespace ACM.Wipt
     /// <returns>A reference to the newly created Repository.</returns>
     public static Repository Create(string xmlFile, string maintainer, string supportURL)
     {
-      string formatstring = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n<Repository xmlns=\"urn:xmlns:sigwin:wipt-get:repository\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:SchemaLocation=\"urn:xmlns:sigwin:wipt-get:repository http://www.acm.uiuc.edu/sigwin/WiptSchema.xsd\" Maintainer=\"{0}\" SupportURL=\"{1}\"></Repository>";
+      const string schema = "http://www.acm.uiuc.edu/sigwin/wipt/2006/09";
+      string formatstring = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n<Repository xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/09\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:SchemaLocation=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/09 http://www.acm.uiuc.edu/sigwin/wipt/2006/09/repository.xsd\" Maintainer=\"{0}\" SupportURL=\"{1}\"></Repository>";
 
       XmlDocument newDoc = new XmlDocument();
       newDoc.LoadXml(string.Format(formatstring, maintainer, supportURL));

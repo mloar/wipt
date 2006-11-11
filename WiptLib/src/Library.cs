@@ -577,8 +577,8 @@ namespace ACM.Wipt
         new XmlValidatingReader(new XmlTextReader(st));
 
       VReader.ValidationType = ValidationType.Schema;
-      VReader.Schemas.Add("urn:xmlns:sigwin:wipt-get:repository",
-          "http://www.acm.uiuc.edu/sigwin/WiptSchema.xsd");
+      VReader.Schemas.Add("urn:xmlns:sigwin:wipt-get:repository", "http://www.acm.uiuc.edu/sigwin/WiptSchema.xsd");
+      //VReader.Schemas.Add("http://www.acm.uiuc.edu/wipt/2006/06", GetSchemaLocation());
       VReader.ValidationEventHandler += 
         new System.Xml.Schema.ValidationEventHandler(
             ValidationEventHandler);
@@ -586,6 +586,30 @@ namespace ACM.Wipt
       XmlDocument myRepository = new XmlDocument();
       myRepository.Load(VReader);
       return myRepository;
+    }
+
+    private static string GetSchemaLocation()
+    {
+      string schemaloc = null;
+      RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE\\ACM\\Wipt");
+      if(rk != null)
+      { 
+        object temp = rk.GetValue("SchemaLocation1.0");
+        if(temp == null)
+        {
+        }
+        else if(!(temp is string))
+        {
+          Console.Error.WriteLine("HKLM\\ACM\\Wipt\\SchemaLocation1.0 is not a REG_SZ - ignored");
+        }
+        else
+        {
+          schemaloc = (string)temp;
+        }
+        rk.Close();
+      }
+
+      return schemaloc;
     }
 
     private static void ValidationEventHandler(object sender,

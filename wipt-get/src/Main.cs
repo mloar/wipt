@@ -264,6 +264,9 @@ namespace ACM.Wipt
         ApplicationDatabase.setProgressHandler(
             new ACM.Wipt.WindowsInstaller.ProgressHandler(
               ProgressHandler));
+        ApplicationDatabase.setErrorHandler(
+            new ACM.Wipt.WindowsInstaller.ErrorHandler(
+              ErrorHandler));
 
         uint ret;
         /*string tempy = "";
@@ -357,6 +360,9 @@ namespace ACM.Wipt
             ApplicationDatabase.setProgressHandler(
                 new ACM.Wipt.WindowsInstaller.ProgressHandler(
                   ProgressHandler));
+            ApplicationDatabase.setErrorHandler(
+                new ACM.Wipt.WindowsInstaller.ErrorHandler(
+                  ErrorHandler));
 
             Guid productCode = GetVersionProductCode(product.upgradeCode, instVersion);
 
@@ -753,6 +759,13 @@ namespace ACM.Wipt
         index = 0;
       char[] bob = new char[] {'\\','|','/','-'};
       Console.Write(new char[] {'\x08', bob[index]});
+    }
+
+    private static void ErrorHandler(string error)
+    {
+      Console.WriteLine("\x08");
+      Console.WriteLine(error);
+      Console.Write("|");
     }
 
     private class WiptConfig

@@ -22,7 +22,7 @@ all: AssemblyVersion.cs
 	copy /y wipt-put\wipt-put.exe bin
 	copy /y wiptlib\wiptlib.dll bin
 	copy /y System.Installer\ACM.Wipt.WindowsInstaller.dll bin
-!IFDEF DEBUG
+!IFNDEF NODEBUG
 	copy /y wipt-get\wipt-get.pdb bin
 	copy /y wipt-put\wipt-put.pdb bin
 	copy /y wiptlib\wiptlib.pdb bin
@@ -48,7 +48,5 @@ clean:
 	cd ..\wipt-put
 	nmake /$(MAKEFLAGS) clean 2> nul
 	cd ..\WiptLib
-	nmake /$(MAKEFLAGS) clean 2> nul
-	cd ..\wipt-gui
 	nmake /$(MAKEFLAGS) clean 2> nul
 	cd ..
