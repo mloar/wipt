@@ -12,6 +12,7 @@ namespace ACM
     namespace WindowsInstaller
     {
       public __delegate void ProgressHandler(double progress);
+      public __delegate void ErrorHandler(String* errmsg);
 
       public __value enum InstallUILevel
       {
@@ -54,6 +55,7 @@ namespace ACM
           static String* getPatchName(Guid patchCode);
           static InstallUILevel setInternalUI(InstallUILevel newLevel);
           static void setProgressHandler(ProgressHandler* handler);				
+          static void setErrorHandler(ErrorHandler* handler);				
           static unsigned int applyPatch(String* sourcePath);
           static unsigned int applyPatch(String* sourcePath, Guid productCode);
           static unsigned int installProduct(String* sourcePath, String* commandLine);
@@ -65,6 +67,7 @@ namespace ACM
           static String* GetPackageProperty(String* path, String* property);
         private:
           static ProgressHandler* handler;
+          static ErrorHandler* ehandler;
 
           __nogc class Callbacks
           {

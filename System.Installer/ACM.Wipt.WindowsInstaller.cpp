@@ -322,83 +322,96 @@ retry:
         MsiSetExternalUI(Callbacks::ExternalUIHandler, INSTALLLOGMODE_PROGRESS|INSTALLLOGMODE_ERROR|INSTALLLOGMODE_FATALEXIT, NULL);
       }
 
+      void ApplicationDatabase::setErrorHandler(ErrorHandler* handler)
+      {
+        ApplicationDatabase::ehandler=handler;
+        MsiSetExternalUI(Callbacks::ExternalUIHandler, INSTALLLOGMODE_PROGRESS|INSTALLLOGMODE_ERROR|INSTALLLOGMODE_FATALEXIT, NULL);
+      }
+
       int ApplicationDatabase::ExecuteHandler(UINT iMessageType, LPCTSTR szMessage)
       {
-        if(handler)
+        if(iMessageType == INSTALLMESSAGE_PROGRESS)
         {
-          if(iMessageType == INSTALLMESSAGE_PROGRESS)
-            if(ParseProgressString(const_cast<LPTSTR>(szMessage)))
+          if(ParseProgressString(const_cast<LPTSTR>(szMessage)))
+          {
+            // all fields off by 1 due to c array notation
+            switch(iField[0])
             {
-              // all fields off by 1 due to c array notation
-              switch(iField[0])
-              {
-                case 0: // reset progress bar
-                  {
-                    //field 1 = 0, field 2 = total number of ticks, field 3 = direction, field 4 = in progress
+              case 0: // reset progress bar
+                {
+                  //field 1 = 0, field 2 = total number of ticks, field 3 = direction, field 4 = in progress
 
-                    /* get total number of ticks in progress bar */
-                    g_iProgressTotal = iField[1];
+                  /* get total number of ticks in progress bar */
+                  g_iProgressTotal = iField[1];
 
-                    /* determine direction */
-                    if (iField[2] == 0)
-                      g_bForwardProgress = TRUE;
-                    else // iField[2] == 1
-                      g_bForwardProgress = FALSE;
+                  /* determine direction */
+                  if (iField[2] == 0)
+                    g_bForwardProgress = TRUE;
+                  else // iField[2] == 1
+                    g_bForwardProgress = FALSE;
 
-                    /* get current position of progress bar, depends on direction */
-                    // if Forward direction, current position is 0
-                    // if Backward direction, current position is Total # ticks
-                    g_iProgress = g_bForwardProgress ? 0 : g_iProgressTotal;
-                    //SendMessage(/*handle to your progress control*/,PBM_SETRANGE,0,MAKELPARAM(0,g_iProgressTotal));
-                    // if g_bScriptInProgress, finish progress bar, else reset (and set up according to direction)
-                    //SendMessage(/*handle to your progress control*/,PBM_SETPOS,g_bScriptInProgress ? g_iProgressTotal : g_iProgress, 0);
-                    handler->Invoke(g_iProgress/g_iProgressTotal);
-                    /* determine new state */
-                    // if new state = 1 (script in progress), could send a "Please wait..." msg
-                    g_bScriptInProgress = (iField[3] == 1) ? TRUE : FALSE;
-                    break;
-                  }
-                case 1:
+                  /* get current position of progress bar, depends on direction */
+                  // if Forward direction, current position is 0
+                  // if Backward direction, current position is Total # ticks
+                  g_iProgress = g_bForwardProgress ? 0 : g_iProgressTotal;
+                  //SendMessage(/*handle to your progress control*/,PBM_SETRANGE,0,MAKELPARAM(0,g_iProgressTotal));
+                  // if g_bScriptInProgress, finish progress bar, else reset (and set up according to direction)
+                  //SendMessage(/*handle to your progress control*/,PBM_SETPOS,g_bScriptInProgress ? g_iProgressTotal : g_iProgress, 0);
+                  if(handler)handler->Invoke(g_iProgress/g_iProgressTotal);
+                  /* determine new state */
+                  // if new state = 1 (script in progress), could send a "Please wait..." msg
+                  g_bScriptInProgress = (iField[3] == 1) ? TRUE : FALSE;
+                  break;
+                }
+              case 1:
+                {
+                  //field 1 = 1, field 2 will contain the number of ticks to increment the bar
+                  //ignore if field 3 is zero
+                  if(iField[2])
                   {
-                    //field 1 = 1, field 2 will contain the number of ticks to increment the bar
-                    //ignore if field 3 is zero
-                    if(iField[2])
-                    {
-                      // movement direction determined by g_bForwardProgress set by reset progress msg
-                      //SendMessage(/*handle to your progress control*/,PBM_SETSTEP,g_bForwardProgress ? iField[1] : -1*iField[1],0);
-                      g_bEnableActionData = TRUE;
-                    }
-                    else
-                    {
-                      g_bEnableActionData = FALSE;
-                    }
-                    break;
-                  }
-                case 2:
-                  {
-                    // only act if progress total has been initialized
-                    if (0 == g_iProgressTotal)
-                      break;
-                    //field 1 = 2,field 2 will contain the number of ticks the bar has moved
                     // movement direction determined by g_bForwardProgress set by reset progress msg
-                    handler->Invoke((g_iProgress + (g_bForwardProgress ? iField[1] : -1*iField[1])));
-                    //SendMessage(/*handle to your progress control*/,PBM_DELTAPOS,g_bForwardProgress ? iField[1] : -1*iField[1],0);
-                    break;
+                    //SendMessage(/*handle to your progress control*/,PBM_SETSTEP,g_bForwardProgress ? iField[1] : -1*iField[1],0);
+                    g_bEnableActionData = TRUE;
                   }
-                case 3: // fall through (we don't care to handle it -- total tick count adjustment)
-                default:
+                  else
                   {
-                    break;
+                    g_bEnableActionData = FALSE;
                   }
-              }
+                  break;
+                }
+              case 2:
+                {
+                  // only act if progress total has been initialized
+                  if (0 == g_iProgressTotal)
+                    break;
+                  //field 1 = 2,field 2 will contain the number of ticks the bar has moved
+                  // movement direction determined by g_bForwardProgress set by reset progress msg
+                  if(handler)handler->Invoke((g_iProgress + (g_bForwardProgress ? iField[1] : -1*iField[1])));
+                  //SendMessage(/*handle to your progress control*/,PBM_DELTAPOS,g_bForwardProgress ? iField[1] : -1*iField[1],0);
+                  break;
+                }
+              case 3: // fall through (we don't care to handle it -- total tick count adjustment)
+              default:
+                {
+                  break;
+                }
             }
-          /*if(g_bCancelInstall == TRUE)
-            {
-            return IDCANCEL;
-            }
-            else*/
-
+          }
         }
+        else if(iMessageType == INSTALLMESSAGE_ERROR)
+        {
+          if(ehandler)ehandler->Invoke(Marshal::PtrToStringAuto(static_cast<IntPtr>(static_cast<void*>(const_cast<LPTSTR>(szMessage)))));
+        }
+        else if(iMessageType == INSTALLMESSAGE_FATALEXIT)
+        {
+          if(ehandler)ehandler->Invoke(Marshal::PtrToStringAuto(static_cast<IntPtr>(static_cast<void*>(const_cast<LPTSTR>(szMessage)))));
+        }
+        /*if(g_bCancelInstall == TRUE)
+          {
+          return IDCANCEL;
+          }
+          else*/
+
         return IDOK;
       }
 
@@ -408,13 +421,13 @@ retry:
         return 0;
       }
 
-      unsigned int ApplicationDatabase::applyPatch(String* sourcePath)
+    unsigned int ApplicationDatabase::applyPatch(String* sourcePath)
+    {
+      LPWSTR path = 0;
+      try
       {
-        LPWSTR path = 0;
-        try
-        {
-          path = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(sourcePath)));
-        }
+        path = static_cast<LPWSTR>(static_cast<void*>(Marshal::StringToHGlobalAuto(sourcePath)));
+      }
         catch(ArgumentException*)
         {
           return ERROR_INVALID_PARAMETER;
@@ -521,7 +534,7 @@ retry:
         }
 
         
-        UINT ret = MsiConfigureProduct(code, 0, INSTALLSTATE_ABSENT);
+        UINT ret = MsiConfigureProductEx(code, INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT, L"REBOOT=R");
 
         return ret;
       }
