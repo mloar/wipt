@@ -182,7 +182,7 @@ namespace ACM.Wipt
   /// <remarks>
   /// The WiptException class defines exceptions for Wipt.
   /// </remarks>
-  public class WiptException : System.ApplicationException
+  public class WiptException : System.Exception
   {
     internal WiptException(string message) : base(message) {}
     internal WiptException(string message, Exception innerException) : 

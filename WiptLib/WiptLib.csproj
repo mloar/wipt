@@ -87,6 +87,7 @@
   <ItemGroup>
     <Compile Include="src\AssemblyInfo.cs" />
     <Compile Include="src\Library.cs">
+    <Compile Include="src\Repository.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
