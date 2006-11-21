@@ -43,7 +43,7 @@ using Microsoft.Win32;
 
 namespace ACM.Wipt
 {
-  public class wipt_get
+  public abstract class wipt_get
   {
     [DllImport("kernel32.dll")]
       private static extern uint FormatMessage(uint dwFlags, IntPtr lpSource, uint dwMessageId, uint dwLanguageId, 
@@ -266,12 +266,10 @@ namespace ACM.Wipt
         Console.Write("Installing "+ product.name + "... ");
 
         WindowsInstaller.SetInternalUI(WindowsInstaller.MsiInstallUILevel.None, IntPtr.Zero);
-        /*WindowsInstaller.setProgressHandler(
-            new WindowsInstaller.ProgressHandler(
-              ProgressHandler));
-        WindowsInstaller.setErrorHandler(
-            new WindowsInstaller.ErrorHandler(
-              ErrorHandler));*/
+        WindowsInstaller.MsiExternalUIHandler handler = new WindowsInstaller.MsiExternalUIHandler(UIHandler);
+        WindowsInstaller.SetExternalUI(
+            handler, WindowsInstaller.MsiInstallLogMode.Progress | WindowsInstaller.MsiInstallLogMode.Error
+            | WindowsInstaller.MsiInstallLogMode.FatalExit, IntPtr.Zero);
 
         uint ret;
         ret = WindowsInstaller.InstallProduct(URL, properties);
@@ -346,12 +344,10 @@ namespace ACM.Wipt
             Console.Write("Removing "+ product.name + "... ");
 
             WindowsInstaller.SetInternalUI(WindowsInstaller.MsiInstallUILevel.None, IntPtr.Zero);
-            /*WindowsInstaller.SetProgressHandler(
-                new WindowsInstaller.ProgressHandler(
-                  ProgressHandler));
-            WindowsInstaller.setErrorHandler(
-                new WindowsInstaller.ErrorHandler(
-                  ErrorHandler));*/
+            WindowsInstaller.MsiExternalUIHandler handler = new WindowsInstaller.MsiExternalUIHandler(UIHandler);
+            WindowsInstaller.SetExternalUI(
+                handler, WindowsInstaller.MsiInstallLogMode.Progress | WindowsInstaller.MsiInstallLogMode.Error
+                | WindowsInstaller.MsiInstallLogMode.FatalExit, IntPtr.Zero);
 
             Guid productCode = GetVersionProductCode(product.upgradeCode, instVersion);
 
@@ -745,6 +741,15 @@ namespace ACM.Wipt
       Console.WriteLine("\x08");
       Console.WriteLine(error);
       Console.Write("|");
+    }
+
+    private static int UIHandler(IntPtr pvContext, uint iMessageType, string szMessage)
+    {
+      if(iMessageType == (uint)WindowsInstaller.MsiInstallMessage.Progress)
+        ProgressHandler(0);
+      else
+        ErrorHandler(szMessage);
+      return 0;
     }
 
     private static string getErrorMessage(uint ret)

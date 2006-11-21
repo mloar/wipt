@@ -41,7 +41,7 @@ namespace ACM.Wipt
   /// <remarks>This implements a partial interface to the Windows Installer.</remarks>
   public abstract class WindowsInstaller
   {
-    public delegate uint MsiExternalUIHandler(IntPtr pvContext, uint iMessageType, string szMessage);
+    public delegate int MsiExternalUIHandler(IntPtr pvContext, uint iMessageType, string szMessage);
 
     [DllImport("msi.dll")]
       private static extern uint MsiEnumRelatedProducts(
@@ -262,7 +262,17 @@ namespace ACM.Wipt
     /// </param>
     public static uint InstallProduct(string PackagePath, string CommandLine)
     {
-      return MsiInstallProduct(PackagePath, CommandLine);
+      uint ret = 0;
+      try
+      {
+        ret = MsiInstallProduct(PackagePath, CommandLine);
+      }
+      catch(Exception e)
+      {
+        Console.WriteLine("WTF?");
+      }
+
+      return ret;
     }
 
     /// <summary>Applies a patch to a product.</summary>
