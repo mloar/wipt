@@ -35,15 +35,20 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using ACM.Wipt.WindowsInstaller;
 using Microsoft.Win32;
 
 namespace ACM.Wipt
 {
   public class wipt_get
   {
+    [DllImport("kernel32.dll")]
+      private static extern uint FormatMessage(uint dwFlags, IntPtr lpSource, uint dwMessageId, uint dwLanguageId, 
+          StringBuilder lpBuffer, uint nSize, IntPtr args);
+
     [STAThread]
       public static int Main(string[] args)
       {
@@ -238,9 +243,9 @@ namespace ACM.Wipt
           URL = URL.Replace("/", "\\");
         }
 
-        InstallState state = ApplicationDatabase.getProductState(productCode);
-        if(state != InstallState.Removed && state != InstallState.Absent 
-            && state != InstallState.Unknown)
+        WindowsInstaller.MsiInstallState state = WindowsInstaller.QueryProductState(productCode);
+        if(state != WindowsInstaller.MsiInstallState.Removed && state != WindowsInstaller.MsiInstallState.Absent 
+            && state != WindowsInstaller.MsiInstallState.Unknown)
         {
           // minor upgrade
           properties += "REINSTALL=ALL REINSTALLMODE=vomus ";
@@ -260,34 +265,18 @@ namespace ACM.Wipt
 
         Console.Write("Installing "+ product.name + "... ");
 
-        ApplicationDatabase.setInternalUI(InstallUILevel.None);
-        ApplicationDatabase.setProgressHandler(
-            new ACM.Wipt.WindowsInstaller.ProgressHandler(
+        WindowsInstaller.SetInternalUI(WindowsInstaller.MsiInstallUILevel.None, IntPtr.Zero);
+        /*WindowsInstaller.setProgressHandler(
+            new WindowsInstaller.ProgressHandler(
               ProgressHandler));
-        ApplicationDatabase.setErrorHandler(
-            new ACM.Wipt.WindowsInstaller.ErrorHandler(
-              ErrorHandler));
+        WindowsInstaller.setErrorHandler(
+            new WindowsInstaller.ErrorHandler(
+              ErrorHandler));*/
 
         uint ret;
-        /*string tempy = "";
-        WebClient wc = new WebClient();
-        try
-        {
-          tempy = Environment.GetFolderPath(Environment.SpecialFolder.InternetCache) + "\\wiptget.tmp";
-          System.IO.File.Delete(tempy);
-          wc.DownloadFile(URL, tempy);
-        }
-        catch(Exception e)
-        {
-          Console.Error.WriteLine("ERROR: {0}", e.Message);
-          return false;
-        }
-
-        ret = ApplicationDatabase.checkTrust(tempy); 
-        if(ret == 0)*/
-          ret = ApplicationDatabase.installProduct(URL, properties);
+        ret = WindowsInstaller.InstallProduct(URL, properties);
         Console.Write("\x08");
-        Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+        Console.WriteLine(getErrorMessage(ret));
 
 
         // Hackish way to prevent reapplication of patches
@@ -356,19 +345,20 @@ namespace ACM.Wipt
           {
             Console.Write("Removing "+ product.name + "... ");
 
-            ApplicationDatabase.setInternalUI(InstallUILevel.None);
-            ApplicationDatabase.setProgressHandler(
-                new ACM.Wipt.WindowsInstaller.ProgressHandler(
+            WindowsInstaller.SetInternalUI(WindowsInstaller.MsiInstallUILevel.None, IntPtr.Zero);
+            /*WindowsInstaller.SetProgressHandler(
+                new WindowsInstaller.ProgressHandler(
                   ProgressHandler));
-            ApplicationDatabase.setErrorHandler(
-                new ACM.Wipt.WindowsInstaller.ErrorHandler(
-                  ErrorHandler));
+            WindowsInstaller.setErrorHandler(
+                new WindowsInstaller.ErrorHandler(
+                  ErrorHandler));*/
 
             Guid productCode = GetVersionProductCode(product.upgradeCode, instVersion);
 
-            uint ret = ApplicationDatabase.removeProduct(productCode);
+            uint ret = WindowsInstaller.ConfigureProduct(productCode, WindowsInstaller.MsiInstallLevel.Default,
+                WindowsInstaller.MsiInstallState.Absent, "REBOOT=R");
             Console.Write("\x08");
-            Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+            Console.WriteLine(getErrorMessage(ret));
           }
           else
             Console.Error.WriteLine("ERROR: The specified version of {0} is not installed", product.name);
@@ -452,9 +442,10 @@ namespace ACM.Wipt
             if(code == productCode)
             {
               Console.Write("Applying patch "+ patch.name + "... ");
-              uint ret = ApplicationDatabase.applyPatch(patch.URL, productCode);
+              uint ret = WindowsInstaller.ApplyPatch(patch.URL, "{" + productCode.ToString().ToUpper() + "}", 
+                  WindowsInstaller.MsiInstallType.SingleInstance, "");
               Console.Write("\x08");
-              Console.WriteLine(ApplicationDatabase.getErrorMessage(ret));
+              Console.WriteLine(getErrorMessage(ret));
               if(ret != 0)
                 success = false;
               break;
@@ -467,10 +458,8 @@ namespace ACM.Wipt
 
     public static bool IsPatchApplied(Patch patch, Guid productCode)
     {
-      int k = 0;
-
-      Guid code;
-      while((code = ApplicationDatabase.getInstalledPatches(productCode, k++)) != Guid.Empty)
+      Guid[] codes = WindowsInstaller.EnumPatches(productCode);
+      foreach(Guid code in codes)
       {
         if(patch.patchCode == code)
           return true;
@@ -648,25 +637,17 @@ namespace ACM.Wipt
 
     private static Guid GetVersionProductCode(Guid upgradecode, Version version)
     {
-      Guid ret;
-      int i = 0;
-      while((ret = ApplicationDatabase.findProductByUpgradeCode(upgradecode, i)) != Guid.Empty)
+      Guid[] products = WindowsInstaller.EnumRelatedProducts(upgradecode);
+      foreach(Guid code in products)
       {
-        InstallState state = ApplicationDatabase.getProductState(ret);
-        if(!(state == InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
+        WindowsInstaller.MsiInstallState state = WindowsInstaller.QueryProductState(code);
+        if(!(state == WindowsInstaller.MsiInstallState.Removed || state == WindowsInstaller.MsiInstallState.Absent
+              || state == WindowsInstaller.MsiInstallState.Unknown))
         {
-          if(version == null || version == GetProperVersion(ApplicationDatabase.getInstalledVersion(ret)))
+          if(version == null || version == GetProperVersion(WindowsInstaller.GetProductInfo(code, "VersionString")))
           {
-            return ret;
+            return code;
           }
-          else
-          {
-            i++;
-          }
-        }
-        else
-        {
-          i++;
         }
       }
 
@@ -675,17 +656,16 @@ namespace ACM.Wipt
 
     private static int GetNumberofInstalledVersions(Guid upgradeCode)
     {
-      int i = 0, products = 0;
-      Guid productCode;
-      while((productCode = ApplicationDatabase.findProductByUpgradeCode(upgradeCode, i)) != Guid.Empty)
+      int products = 0;
+      Guid[] codes = WindowsInstaller.EnumRelatedProducts(upgradeCode);
+      foreach(Guid code in codes)
       {
-        InstallState state = ApplicationDatabase.getProductState(productCode);
-        if(!(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown))
+        WindowsInstaller.MsiInstallState state = WindowsInstaller.QueryProductState(code);
+        if(!(state ==  WindowsInstaller.MsiInstallState.Removed || state == WindowsInstaller.MsiInstallState.Absent
+              || state == WindowsInstaller.MsiInstallState.Unknown))
         {
           products++;
         }
-
-        i++;
       }
       
       return products;
@@ -693,8 +673,9 @@ namespace ACM.Wipt
 
     private static bool IsInstalled(Guid productCode)
     {
-      InstallState state = ApplicationDatabase.getProductState(productCode);
-      return !(state ==  InstallState.Removed || state == InstallState.Absent || state == InstallState.Unknown);
+      WindowsInstaller.MsiInstallState state = WindowsInstaller.QueryProductState(productCode);
+      return !(state ==  WindowsInstaller.MsiInstallState.Removed || state == WindowsInstaller.MsiInstallState.Absent
+          || state == WindowsInstaller.MsiInstallState.Unknown);
     }
 
     private static bool IsInstalled(string product)
@@ -703,11 +684,10 @@ namespace ACM.Wipt
 
       if(p != null)
       {
-        int i = 0;
-        Guid productCode;
-        while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
+        Guid[] productCodes = WindowsInstaller.EnumRelatedProducts(p.upgradeCode);
+        foreach(Guid code in productCodes)
         {
-          if(IsInstalled(productCode))
+          if(IsInstalled(code))
             return true;
         }
       }
@@ -723,13 +703,12 @@ namespace ACM.Wipt
         return false;
       }
 
-      int i = 0;
-      Guid productCode;
-      while((productCode = ApplicationDatabase.findProductByUpgradeCode(p.upgradeCode, i++)) != Guid.Empty)
+      Guid[] productCodes = WindowsInstaller.EnumRelatedProducts(p.upgradeCode);
+      foreach(Guid code in productCodes)
       {
-        if(IsInstalled(productCode))
+        if(IsInstalled(code))
         {
-          Version v = GetProperVersion(ApplicationDatabase.getInstalledVersion(productCode));
+          Version v = GetProperVersion(WindowsInstaller.GetProductInfo(code, "VersionString"));
 
           if(v >= minVersion && v <= maxVersion)
           {
@@ -766,6 +745,13 @@ namespace ACM.Wipt
       Console.WriteLine("\x08");
       Console.WriteLine(error);
       Console.Write("|");
+    }
+
+    private static string getErrorMessage(uint ret)
+    {
+      StringBuilder buffer = new StringBuilder(4096);
+      FormatMessage(0x00001000, IntPtr.Zero, ret, 0, buffer, 4096, IntPtr.Zero);
+      return buffer.ToString();
     }
 
     private class WiptConfig
@@ -810,6 +796,7 @@ namespace ACM.Wipt
 
         return targetdir;
       }
+
     }
   }
 }

@@ -32,35 +32,22 @@
  *  DEALINGS WITH THE SOFTWARE.
  */
 
-#include "stdafx.h"
-
-using namespace System::Reflection;
-using namespace System::Runtime::CompilerServices;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 //
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly:AssemblyTitleAttribute("Windows Installer Interface")];
-[assembly:AssemblyDescriptionAttribute("The Windows Installer Interface Library")];
-[assembly:AssemblyConfigurationAttribute("")];
-[assembly:AssemblyCompanyAttribute("SIGWin, the Special Interest Group for Windows Development")];
-[assembly:AssemblyProductAttribute("WIPT")];
-[assembly:AssemblyCopyrightAttribute("Copyright 2006 ACM@UIUC.  See LICENSE file for copying details.")];
-[assembly:AssemblyTrademarkAttribute("")];
-[assembly:AssemblyCultureAttribute("")];		
-
-//
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the value or you can default the Revision and Build Numbers 
-// by using the '*' as shown below:
+[assembly: AssemblyTitle("Windows Installer Library")]
+[assembly: AssemblyDescription("Windows Installer Library")]
+[assembly: AssemblyConfiguration("Release")]
+[assembly: AssemblyCompany("SIGWin, ACM@UIUC")]
+[assembly: AssemblyProduct("Windows Installer Package Tool")]
+[assembly: AssemblyCopyright("Copyright (c) 2006 ACM@UIUC.  All rights reserved.")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]		
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 
@@ -79,12 +66,14 @@ using namespace System::Runtime::CompilerServices;
 //       (2) If the KeyName does not exist and the KeyFile does exist, the key 
 //           in the KeyFile is installed into the CSP and used.
 //   (*) In order to create a KeyFile, you can use the sn.exe (Strong Name) utility.
-//        When specifying the KeyFile, the location of the KeyFile should be
-//        relative to the project directory.
+//       When specifying the KeyFile, the location of the KeyFile should be
+//       relative to the project output directory which is
+//       %Project Directory%\obj\<configuration>. For example, if your KeyFile is
+//       located in the project directory, you would specify the AssemblyKeyFile 
+//       attribute as [assembly: AssemblyKeyFile("..\\..\\mykey.snk")]
 //   (*) Delay Signing is an advanced option - see the Microsoft .NET Framework
 //       documentation for more information on this.
 //
-[assembly:AssemblyDelaySignAttribute(false)];
-[assembly:AssemblyKeyFileAttribute("..\\keys\\system.installer.snk")];
-[assembly:AssemblyKeyNameAttribute("")];
-
+[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyKeyFile("..\\keys\\WindowsInstaller.snk")]
+[assembly: AssemblyKeyName("")]

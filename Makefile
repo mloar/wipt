@@ -3,29 +3,35 @@
 !INCLUDE "Wipt.ver"
 
 all: AssemblyVersion.cs
+	-rmdir /s /q bin 2> nul
+	-mkdir bin 2> nul
 	echo Building Windows Installer assembly...
-	cd System.Installer
+	cd WindowsInstaller
 	nmake /$(MAKEFLAGS) ACM.Wipt.WindowsInstaller.dll
+	copy /y ACM.Wipt.WindowsInstaller.dll ..\bin
+!IFNDEF NODEBUG
+	copy /y ACM.Wipt.WindowsInstaller.pdb ..\bin
+!ENDIF
 	echo Building WiptLib...
 	cd ..\WiptLib
 	nmake /$(MAKEFLAGS) WiptLib.dll
+	copy /y wiptlib.dll ..\bin
+!IFNDEF NODEBUG
+	copy /y wiptlib.pdb ..\bin
+!ENDIF
 	echo Building wipt-get...
 	cd ..\wipt-get
 	nmake /$(MAKEFLAGS) wipt-get.exe
+	copy /y wipt-get.exe ..\bin
+!IFNDEF NODEBUG
+	copy /y wipt-get.pdb ..\bin
+!ENDIF
 	echo Building wipt-put...
 	cd ..\wipt-put
 	nmake /$(MAKEFLAGS) wipt-put.exe
-	cd ..
-	-rmdir /s /q bin 2> nul
-	-mkdir bin 2> nul
-	copy /y wipt-get\wipt-get.exe bin
-	copy /y wipt-put\wipt-put.exe bin
-	copy /y wiptlib\wiptlib.dll bin
-	copy /y System.Installer\ACM.Wipt.WindowsInstaller.dll bin
+	copy /y wipt-put.exe ..\bin
 !IFNDEF NODEBUG
-	copy /y wipt-get\wipt-get.pdb bin
-	copy /y wipt-put\wipt-put.pdb bin
-	copy /y wiptlib\wiptlib.pdb bin
+	copy /y wipt-put.pdb ..\bin
 !ENDIF
 
 AssemblyVersion.cs: Wipt.ver
@@ -41,7 +47,7 @@ wipt.msi: all
 clean:
 	-rmdir /s /q bin 2> nul
 	-del Wipt.msi Wipt.wixobj Wipt.ncb AssemblyVersion.cs 2> nul
-	cd System.Installer
+	cd WindowsInstaller
 	nmake /$(MAKEFLAGS) clean 2> nul
 	cd ..\wipt-get
 	nmake /$(MAKEFLAGS) clean 2> nul

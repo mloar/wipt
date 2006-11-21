@@ -36,7 +36,6 @@ using System;
 using System.IO;
 using System.Net;
 using System.Xml;
-using ACM.Wipt.WindowsInstaller;
 using Microsoft.Win32;
 
 namespace ACM.Wipt
@@ -139,7 +138,7 @@ namespace ACM.Wipt
               string tempy = Environment.GetFolderPath(Environment.SpecialFolder.InternetCache) + "\\wiptput.tmp";
               System.IO.File.Delete(tempy);
               webc.DownloadFile(msiurl, tempy);
-              MsiDatabase db = new MsiDatabase(tempy);
+              WindowsInstaller.MsiDatabase db = new WindowsInstaller.MsiDatabase(tempy);
               Console.WriteLine("MSI Valid");
             }
             catch(Exception)
@@ -172,7 +171,7 @@ namespace ACM.Wipt
               string tempy = Environment.GetFolderPath(Environment.SpecialFolder.InternetCache) + "\\wiptput.tmp";
               System.IO.File.Delete(tempy);
               wc.DownloadFile(msiurl, tempy);
-              MsiDatabase db = new MsiDatabase(tempy);
+              WindowsInstaller.MsiDatabase db = new WindowsInstaller.MsiDatabase(tempy);
               theRepo.AddPackage(db.ProductName, db.UpgradeCode, db.Manufacturer, db.SupportURL,
                 db.ProductVersion, db.ProductCode, msiurl, makestable);
             }
