@@ -13,7 +13,7 @@
 		<Directory Id="TARGETDIR" Name="SourceDir">
 				<Directory Id="ACMDir" Name="ACM">
 					<Directory Id="INSTALLDIR" Name="Wipt">
-						<Component Id="SystemInstallerComponent" Guid="D3315C16-FD47-48FD-B15D-0711FCEF603A">
+						<Component Id="SystemInstallerComponent" Guid="2C6BD44F-A99C-4284-881C-DFABCE44223D">
 							<File Id="ACMWiptWindowsInstaller.dllFile" Name="ACM.Wipt.WindowsInstaller.dll" DiskId="1" 
                 Source="System.Installer\ACM.Wipt.WindowsInstaller.dll" Vital="yes" KeyPath="yes" Assembly=".net" />
 						</Component>
