@@ -269,7 +269,7 @@ namespace ACM.Wipt
       }
       catch(Exception e)
       {
-        Console.WriteLine("WTF?");
+        Console.WriteLine("An internal error occurred in Wipt.  The installation may still be in process.");
       }
 
       return ret;

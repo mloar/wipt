@@ -401,7 +401,8 @@ namespace ACM.Wipt
                 }
                 else
                 {
-                  p = new Product(curNode.GetAttribute("Name"), curNode.GetAttribute("Publisher"), curNode.GetAttribute("SupportURL"));
+                  p = new Product(curNode.GetAttribute("Name"), curNode.GetAttribute("Publisher"),
+                      curNode.GetAttribute("SupportURL"));
                   p.upgradeCode = new Guid(curNode.GetAttribute("UpgradeCode"));
                   library.Add(curNode.GetAttribute("Name").ToLower(), p);
                 }
@@ -577,8 +578,8 @@ namespace ACM.Wipt
         new XmlValidatingReader(new XmlTextReader(st));
 
       VReader.ValidationType = ValidationType.Schema;
-      VReader.Schemas.Add("urn:xmlns:sigwin:wipt-get:repository", "http://www.acm.uiuc.edu/sigwin/WiptSchema.xsd");
-      //VReader.Schemas.Add("http://www.acm.uiuc.edu/wipt/2006/06", GetSchemaLocation());
+      VReader.Schemas.Add("urn:xmlns:sigwin:wipt-get:repository", GetOldSchemaLocation());
+      VReader.Schemas.Add("http://www.acm.uiuc.edu/sigwin/wipt/2006/06", GetV1SchemaLocation());
       VReader.ValidationEventHandler += 
         new System.Xml.Schema.ValidationEventHandler(
             ValidationEventHandler);
@@ -588,23 +589,50 @@ namespace ACM.Wipt
       return myRepository;
     }
 
-    private static string GetSchemaLocation()
+    private static string GetOldSchemaLocation()
+    {
+      string schemaloc = null;
+      RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE\\ACM\\Wipt");
+      if(rk != null)
+      { 
+        object temp = rk.GetValue("SchemaLocationOld");
+        if(temp == null)
+        {
+          schemaloc = "http://www.acm.uiuc.edu/sigwin/WiptSchema.xsd";
+        }
+        else if(!(temp is string))
+        {
+          Console.Error.WriteLine("HKLM\\ACM\\Wipt\\SchemaLocation0ld is not a REG_SZ - ignored");
+        }
+        else
+        {
+          schemaloc = (string)temp;
+        }
+        rk.Close();
+      }
+
+      return schemaloc;
+    }
+
+    private static string GetV1SchemaLocation()
     {
       string schemaloc = null;
       RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE\\ACM\\Wipt");
       if(rk != null)
       { 
         object temp = rk.GetValue("SchemaLocation1.0");
-        if(temp == null)
+        if(temp == null || !(temp is string))
         {
-        }
-        else if(!(temp is string))
-        {
-          Console.Error.WriteLine("HKLM\\ACM\\Wipt\\SchemaLocation1.0 is not a REG_SZ - ignored");
+          throw new WiptException("Could not get location of schema file from registry.");
         }
         else
         {
           schemaloc = (string)temp;
+          if(schemaloc[1] == ':') // probably a Windows path
+          {
+            schemaloc = schemaloc.Replace('\\', '/');
+            schemaloc = "file://" + schemaloc;
+          }
         }
         rk.Close();
       }

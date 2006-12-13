@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<xs:schema targetNamespace="urn:xmlns:sigwin:wipt-get:repository" xmlns="urn:xmlns:sigwin:wipt-get:repository"
+<xs:schema targetNamespace="http://www.acm.uiuc.edu/sigwin/wipt/2006/06"
+  xmlns="http://www.acm.uiuc.edu/sigwin/wipt/2006/06"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="0.85">
 	<xs:element name="Repository">
 		<xs:complexType>

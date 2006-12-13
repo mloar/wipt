@@ -59,6 +59,7 @@ namespace ACM.Wipt
           bool reinstall = false;
           bool peruser = false;
           string targetdir = "";
+          string installlevel = "";
           string command = "";
           string packages = "";
 
@@ -88,14 +89,28 @@ namespace ACM.Wipt
                     return 1;
                   }
                 }
-                else if(command == "")
-                  command = arg.ToLower();
+                else if(arg.ToLower().StartsWith("--install-level"))
+                {
+                  string[] parts = arg.ToLower().Split('=');
+                  if(parts[1] != null)
+                    installlevel=parts[1];
+                  else
+                  {
+                    Console.Error.WriteLine("You must specify a level when using --install-level");
+                    Usage();
+                    return 1;
+                  }
+                }
+                else if(arg.ToLower() == "--reinstall")
+                  reinstall = true;
                 else if(arg.ToLower().StartsWith("-"))
                 {
                   Console.Error.WriteLine("Unrecognized option {0}", arg);
                   Usage();
                   return 1;
                 }
+                else if(command == "")
+                  command = arg.ToLower();
                 else
                   packages += arg + ",";
               break;
@@ -122,7 +137,8 @@ namespace ACM.Wipt
             case "install":
               foreach(string package in packages.Split(','))
               {
-                success = Install(package, ignoretransforms, ignorepatches, peruser, targetdir) && success;
+                success = Install(package, ignoretransforms, ignorepatches, peruser, targetdir, installlevel,
+                    reinstall) && success;
               }
             break;
             case "remove":
@@ -135,10 +151,11 @@ namespace ACM.Wipt
               }
             break;
             case "show":
-              List();
+              List(packages.Split(','));
             break;
             case "upgrade":
-              Upgrade(packages.Split(','), ignoretransforms, ignorepatches, peruser, targetdir);
+              Upgrade(packages.Split(','), ignoretransforms, ignorepatches, peruser, targetdir, installlevel,
+                  reinstall);
             break;
             case "update":
               Update();
@@ -165,7 +182,8 @@ namespace ACM.Wipt
         }
       }
 
-    private static bool Install(string p, bool ignoretransforms, bool ignorepatches, bool peruser, string targetdir)
+    private static bool Install(string p, bool ignoretransforms, bool ignorepatches, bool peruser, string targetdir,
+        string installlevel, bool reinstall)
     {
       try
       {
@@ -184,15 +202,29 @@ namespace ACM.Wipt
           return false;
         }
 
-        if(instVersion == null ? IsInstalled(product.name) : IsInstalled(product.name, instVersion, instVersion))
+        bool alreadyInstalled = (instVersion == null ? IsInstalled(product.name) :
+            IsInstalled(product.name, instVersion, instVersion));
+        if(alreadyInstalled && !reinstall)
         {
-          Console.Error.WriteLine(product.name + " is already installed");
+          Console.Error.WriteLine("{0} is already installed", product.name);
           return true;
         }
-
+        else if(!alreadyInstalled && reinstall)
+        {
+          Console.Error.WriteLine("{0} is not installed", product.name);
+          return false;
+        }
 
         if(instVersion == null)
-          instVersion = product.stableVersion;
+        {
+          if(product.stableVersion == null)
+          {
+            Console.Error.WriteLine("{0} has no StableVersion specified.  You must supply a version to install.",
+                product.name);
+          }
+          else
+            instVersion = product.stableVersion;
+        }
 
         string URL = "";
         string properties = "";
@@ -213,8 +245,20 @@ namespace ACM.Wipt
           {
             if((transform.minVersion == null || instVersion >= transform.minVersion) && 
                 (transform.maxVersion == null || instVersion <= transform.maxVersion))
-              properties += transform.URL + ";";
+            {
+              URL = transform.URL;
+
+              if(URL.StartsWith("file://"))
+              {
+                // The Windows Installer system does not support file: URLs.  Don't know why.
+                URL = URL.Substring(7);
+                URL = URL.Replace("/", "\\");
+              }
+
+              properties += URL + ";";
+            }
           }
+          URL = "";
           properties += " ";
         }
         Guid productCode = Guid.Empty;
@@ -239,17 +283,20 @@ namespace ACM.Wipt
         else if(URL.StartsWith("file://"))
         {
           // The Windows Installer system does not support file: URLs.  Don't know why.
-          URL = URL.Substring(8);
+          URL = URL.Substring(7);
           URL = URL.Replace("/", "\\");
         }
 
         WindowsInstaller.MsiInstallState state = WindowsInstaller.QueryProductState(productCode);
-        if(state != WindowsInstaller.MsiInstallState.Removed && state != WindowsInstaller.MsiInstallState.Absent 
-            && state != WindowsInstaller.MsiInstallState.Unknown)
+        if(reinstall || (state != WindowsInstaller.MsiInstallState.Removed && state 
+              != WindowsInstaller.MsiInstallState.Absent && state != WindowsInstaller.MsiInstallState.Unknown))
         {
           // minor upgrade
           properties += "REINSTALL=ALL REINSTALLMODE=vomus ";
         }
+
+        if(installlevel != null && installlevel != "")
+          properties += "INSTALLLEVEL=" + installlevel + " ";
 
         if(targetdir == "")
         {
@@ -273,6 +320,7 @@ namespace ACM.Wipt
 
         uint ret;
         ret = WindowsInstaller.InstallProduct(URL, properties);
+        GC.KeepAlive(handler);
         Console.Write("\x08");
         Console.WriteLine(getErrorMessage(ret));
 
@@ -353,6 +401,7 @@ namespace ACM.Wipt
 
             uint ret = WindowsInstaller.ConfigureProduct(productCode, WindowsInstaller.MsiInstallLevel.Default,
                 WindowsInstaller.MsiInstallState.Absent, "REBOOT=R");
+            GC.KeepAlive(handler);
             Console.Write("\x08");
             Console.WriteLine(getErrorMessage(ret));
           }
@@ -391,7 +440,16 @@ namespace ACM.Wipt
 
         string URL = "";
         if(instVersion == null)
-          instVersion = product.stableVersion;
+        {
+          if(product.stableVersion == null)
+          {
+            Console.Error.WriteLine("{0} has no StableVersion specified.  You must supply a version to install.",
+                product.name);
+          }
+          else
+            instVersion = product.stableVersion;
+        }
+
         foreach(Package package in product.packages)
         {
           if(package.version == instVersion)
@@ -467,59 +525,60 @@ namespace ACM.Wipt
     public static void Usage()
     {
       string usage = @"
-        Usage: wipt-get [options] <command> <product>[=version][, <product>[=version], ...]
-        OPTIONS
-        --ignore-patches            Don't apply patches listed in repository
-        --ignore-transforms         Don't apply transforms listed in repository
-        --per-user                  Perform a per-user install
-        --target-dir=DIR            Override the TARGETDIR setting
+Usage: wipt-get [options] <command> <product>[=version]...
+OPTIONS
+--ignore-patches            Don't apply patches listed in repository
+--ignore-transforms         Don't apply transforms listed in repository
+--per-user                  Perform a per-user install
+--target-dir=DIR            Override the TARGETDIR setting
+--install-level=INT         Override the INSTALLLEVEL setting
+--reinstall                 Force a reinstall
 
-        COMMANDS
-        install                     Install product(s)
-        remove                      Remove product(s)
-        show                        List all products and packages
-        update                      Download package lists from repositories
-        upgrade                     Perform small updates and minor upgrades
-        download                    Just download the MSI to current directory
-        copyright                   Show copyright notice
-        ";
+COMMANDS
+install                     Install product(s)
+remove                      Remove product(s)
+show                        List all products and packages
+update                      Download package lists from repositories
+upgrade                     Upgrade packages that are older than stable version
+download                    Just download the MSI to current directory
+copyright                   Show copyright notice";
       Console.WriteLine(usage);
     }
 
     public static void Copyright()
     {
       string copyright = @"
-        Copyright (c) 2006 Association for Computing Machinery at the 
-        University of Illinois at Urbana-Champaign.
-        All rights reserved.
-        
-        Developed by: Special Interest Group for Windows Development
-                      ACM@UIUC
-                      http://www.acm.uiuc.edu/sigwin
-        
-        Permission is hereby granted, free of charge, to any person obtaining a 
-        copy of this software and associated documentation files (the " + "\"Software\"" + @"),
-        to deal with the Software without restriction, including without limitation
-        the rights to use, copy, modify, merge, publish, distribute, sublicense,
-        and/or sell copies of the Software, and to permit persons to whom the
-        Software is furnished to do so, subject to the following conditions:
-        
-        Redistributions of source code must retain the above copyright notice, this
-        list of conditions and the following disclaimers.
-        Redistributions in binary form must reproduce the above copyright notice,
-        this list of conditions and the following disclaimers in the documentation
-        and/or other materials provided with the distribution.
-        Neither the names of SIGWin, ACM@UIUC, nor the names of its contributors
-        may be used to endorse or promote products derived from this Software
-        without specific prior written permission. 
-        
-        THE SOFTWARE IS PROVIDED " + "\"AS IS\"" + @", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-        FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-        DEALINGS WITH THE SOFTWARE.";
+Copyright (c) 2006 Association for Computing Machinery at the 
+University of Illinois at Urbana-Champaign.
+All rights reserved.
+
+Developed by: Special Interest Group for Windows Development
+              ACM@UIUC
+              http://www.acm.uiuc.edu/sigwin
+
+Permission is hereby granted, free of charge, to any person obtaining a 
+copy of this software and associated documentation files (the " + "\"Software\"" + @"),
+to deal with the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimers.
+Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimers in the documentation
+and/or other materials provided with the distribution.
+Neither the names of SIGWin, ACM@UIUC, nor the names of its contributors
+may be used to endorse or promote products derived from this Software
+without specific prior written permission. 
+
+THE SOFTWARE IS PROVIDED " + "\"AS IS\"" + @", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS WITH THE SOFTWARE.";
       Console.WriteLine(copyright);
     }
 
@@ -553,7 +612,7 @@ namespace ACM.Wipt
     }
 
     public static void Upgrade(string[] products, bool ignoretransforms, bool ignorepatches, bool peruser,
-        string targetdir)
+        string targetdir, string installlevel, bool reinstall)
     {
       Product[] list = new Product[0];
       if(products.Length == 1 && products[0] == "")
@@ -583,31 +642,53 @@ namespace ACM.Wipt
       }
       foreach(Product p in list)
       {
-        if(IsInstalled(p.name) && !IsInstalled(p.name, p.stableVersion, new Version("99.99.9999")))
+        if(IsInstalled(p.name) && p.stableVersion != null && !IsInstalled(p.name, p.stableVersion,
+             new Version("99.99.9999")))
         {
-          Install(p.name + "=" + p.stableVersion.ToString(), ignoretransforms, ignorepatches, peruser, targetdir);
+          Install(p.name + "=" + p.stableVersion.ToString(), ignoretransforms, ignorepatches, peruser, targetdir,
+              installlevel, reinstall);
         }
       }
     }
 
-    public static void List()
+    public static void List(string[] userlist)
     {
       try
       {
-        Product[] list = Library.GetAll();
+        bool fulldesc = false;
+        Product[] list = new Product[0];
+        if(userlist.Length > 1 || userlist[0] != "")
+        {
+          fulldesc = true;
+          foreach(string s in userlist)
+          {
+            if(s == "")
+              continue;
+            Product[] temp = new Product[list.Length + 1];
+            Array.Copy(list, temp, list.Length);
+            temp[list.Length] = Library.GetProduct(s);
+            if(temp[list.Length] == null)
+              Console.Error.WriteLine("Could not find product {0}", s);
+            else
+              list = temp;
+          }
+        }
+        else
+          list = Library.GetAll();
         if(list.Length > 0)
         {
           Array.Sort(list);
           foreach(Product p in list)
           {
-            Console.WriteLine("\n" + p.name);
+            Console.WriteLine(p.name);
+            if(fulldesc && p.description != null && p.description != "") Console.WriteLine("  {0}", p.description);
             if(p.packages.Length > 0)
             {
               Array.Sort(p.packages);
               foreach(Package k in p.packages)
               {
                 string installstring="";
-                if(p.stableVersion == k.version)
+                if(p.stableVersion != null && p.stableVersion == k.version)
                   installstring = "(stable)";
                 if(IsInstalled(p.name, k.version, k.version))
                   installstring += "(installed)";
@@ -622,7 +703,7 @@ namespace ACM.Wipt
         }
         else
         {
-          Console.Error.WriteLine("No packages found in database.");
+          Console.Error.WriteLine("No products found in database.");
         }
       }
       catch(WiptException e)

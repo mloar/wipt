@@ -33,15 +33,16 @@ all: AssemblyVersion.cs
 !IFNDEF NODEBUG
 	copy /y wipt-put.pdb ..\bin
 !ENDIF
+	cd ..
 
 AssemblyVersion.cs: Wipt.ver
 	echo using System.Reflection; > AssemblyVersion.cs
 	echo [assembly:AssemblyVersion("$(ProductVersion).*")] >> AssemblyVersion.cs
 
 wipt.msi: all
-	candle /nologo /dProductVersion=$(ProductVersion) wipt.wxs
+	candle /nologo /dProductVersion=$(ProductVersion) Wipt.wxs
 	light /nologo -ext WixUIExtension -cultures:en-us wipt.wixobj
-!IFNDEF DEBUG
+!IFDEF NODEBUG
 	signtool sign /n "Special Interest Group for Windows Development" /t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt.msi
 !ENDIF
 clean:

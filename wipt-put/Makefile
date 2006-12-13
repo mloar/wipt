@@ -9,8 +9,8 @@ CSFLAGS=$(CSFLAGS) /debug
 CSFLAGS=$(CSFLAGS) /optimize
 !ENDIF
 
-wipt-put.exe: src\Main.cs ..\WindowsInstaller\ACM.Wipt.WindowsInstaller.dll ..\WiptLib\WiptLib.dll 
-	csc $(CSFLAGS) /t:exe /out:wipt-put.exe /r:..\WindowsInstaller\ACM.Wipt.WindowsInstaller.dll /r:..\WiptLib\WiptLib.dll src\Main.cs
+wipt-put.exe: src\Main.cs ..\WindowsInstaller\ACM.Wipt.WindowsInstaller.dll ..\WiptLib\WiptLib.dll ..\AssemblyVersion.cs
+	csc $(CSFLAGS) /t:exe /out:wipt-put.exe /r:..\WindowsInstaller\ACM.Wipt.WindowsInstaller.dll /r:..\WiptLib\WiptLib.dll src\Main.cs ..\AssemblyVersion.cs
 !IFDEF NODEBUG
 	signtool sign /n "Special Interest Group for Windows Development" /t "http://timestamp.verisign.com/scripts/timestamp.dll" wipt-put.exe
 !ENDIF
