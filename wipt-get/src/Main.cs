@@ -253,6 +253,10 @@ namespace ACM.Wipt
                 // The Windows Installer system does not support file: URLs.  Don't know why.
                 URL = URL.Substring(7);
                 URL = URL.Replace("/", "\\");
+                // Windows appears to support either two or four slashes on UNC paths, so we
+                // support both.
+                if(URL[1] != ':' && URL[1] != '\\')
+                  URL = "\\\\" + URL;
               }
 
               properties += URL + ";";
@@ -285,6 +289,10 @@ namespace ACM.Wipt
           // The Windows Installer system does not support file: URLs.  Don't know why.
           URL = URL.Substring(7);
           URL = URL.Replace("/", "\\");
+          // Windows appears to support either two or four slashes on UNC paths, so we
+          // support both.
+          if(URL[1] != ':' && URL[1] != '\\')
+            URL = "\\\\" + URL;
         }
 
         WindowsInstaller.MsiInstallState state = WindowsInstaller.QueryProductState(productCode);
