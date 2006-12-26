@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="2B147118-4CB8-4B3D-8110-CE73CECBB2FF" UpgradeCode="C1781722-8046-4A2A-8419-5CBC9616220C"
+	<Product Id="4DA8E6BB-E79D-4EE0-99FE-E1053D0AAF0D" UpgradeCode="C1781722-8046-4A2A-8419-5CBC9616220C"
 		Name="Wipt" Language="1033" Version="$(var.ProductVersion)" Manufacturer="ACM@UIUC">
 		<Package Description="Windows Installer Package Tool" 
       Comments="This Installer database contains the logic and data required to install Wipt."
@@ -13,18 +13,21 @@
 		<Directory Id="TARGETDIR" Name="SourceDir">
 				<Directory Id="ACMDir" Name="ACM">
 					<Directory Id="INSTALLDIR" Name="Wipt">
-						<Component Id="SystemInstallerComponent" Guid="2C6BD44F-A99C-4284-881C-DFABCE44223D">
+						<Component Id="SystemInstallerComponent" Guid="0E9AC917-3533-4915-B74F-802A8A526BB0">
 							<File Id="ACM.Wipt.WindowsInstaller.dllFile" Name="ACM.Wipt.WindowsInstaller.dll" DiskId="1" 
                 Source="WindowsInstaller\ACM.Wipt.WindowsInstaller.dll" Vital="yes" KeyPath="yes" Assembly=".net" />
 						</Component>
 						<Component Id="WiptLibComponent" Guid="083477F3-A07D-490C-B17F-25EF6DBC7C79">
 							<File Id="WiptLib.dllFile" Name="WIPTLIB.DLL" DiskId="1" Source="WiptLib\WiptLib.dll" Vital="yes" 
                 KeyPath="yes" Assembly=".net" />
-              <File Id="WiptSchema.xsdFile" Name="WiptSchema.xsd" DiskId="1" Source="WiptSchema.xsd" Vital="yes" />
+            </Component>
+            <Component Id="WiptSchemaComponent" Guid="5D212C47-7448-4196-840B-2FC2F2025057">
+              <File Id="WiptSchema.xsdFile" Name="WiptSchema.xsd" DiskId="1" Source="WiptSchema.xsd" Vital="yes" 
+                KeyPath="yes"/>
               <RegistryKey Root="HKLM" Key="SOFTWARE\ACM\Wipt" Action="create" />
               <RemoveRegistryKey Root="HKLM" Key="SOFTWARE\ACM\Wipt" Action="removeOnUninstall" />
               <RegistryValue Root="HKLM" Key="SOFTWARE\ACM\Wipt" Name="Repositories" 
-                Value="https://www-s.acm.uiuc.edu/sigwin/wipt/packages.xml" Type="string" />
+                Value="https://www-s.acm.uiuc.edu/sigwin/wipt/general.xml" Type="string" />
               <RegistryValue Root="HKLM" Key="SOFTWARE\ACM\Wipt" Name="SchemaLocation1.0"
                 Value="[#WiptSchema.xsdFile]" Type="string" />
               <RemoveFile Id="DataFile" On="uninstall" Name="library.dat" Property="WiptDataDir" />
@@ -62,7 +65,7 @@
 		<Feature Id="DefaultFeature" Title="Default Install" Level="1">
 			<ComponentRef Id="WiptgetComponent" />
       <ComponentRef Id="WiptputComponent" />
-      <!--<ComponentRef Id="WiptguiComponent" />-->
+      <ComponentRef Id="WiptSchemaComponent" />
 			<ComponentRef Id="SystemInstallerComponent" />
       <ComponentRef Id="WiptLibComponent" />
 		</Feature>
@@ -74,7 +77,7 @@
 			<UpgradeVersion Minimum="1.0.0" Maximum="$(var.ProductVersion)" Property="PREVIOUSVERSIONSINSTALLED" IncludeMinimum="yes" />
 		</Upgrade>
 		<InstallExecuteSequence>
-      <Custom Action="ErrNetfx11NotInstalled" Before="CostInitialize">NOT NETFX11INSTALLED AND NOT Installed</Custom>
+      <Custom Action="ErrNetfx11NotInstalled" Before="CostInitialize">NOT NETFX11INSTALLED AND VersionNT &lt; 600 AND NOT Installed</Custom>
       <Custom Action="SetTargetDir" Before="CostFinalize">NOT REMOVE AND NOT RESUME AND NOT TARGETDIR</Custom>
       <MigrateFeatureStates />
       <RemoveExistingProducts After="InstallFinalize" />

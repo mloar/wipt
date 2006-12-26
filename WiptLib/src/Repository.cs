@@ -64,8 +64,7 @@ namespace ACM.Wipt
     /// <returns>A reference to the newly created Repository.</returns>
     public static Repository Create(string xmlFile, string maintainer, string supportURL)
     {
-      const string schema = "http://www.acm.uiuc.edu/sigwin/wipt/2006/09";
-      string formatstring = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n<Repository xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/09\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:SchemaLocation=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/09 http://www.acm.uiuc.edu/sigwin/wipt/2006/09/repository.xsd\" Maintainer=\"{0}\" SupportURL=\"{1}\"></Repository>";
+      string formatstring = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n<Repository xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:SchemaLocation=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06 http://www.acm.uiuc.edu/sigwin/wipt/2006/06/repository.xsd\" Maintainer=\"{0}\" SupportURL=\"{1}\"></Repository>";
 
       XmlDocument newDoc = new XmlDocument();
       newDoc.LoadXml(string.Format(formatstring, maintainer, supportURL));
@@ -106,14 +105,14 @@ namespace ACM.Wipt
     public bool AddPackage(string productName, Guid upgradeCode, string publisher, string supportURL, string version,
         Guid productCode, string URL, bool makestable)
     {
-      string formatstring = "<Package xmlns=\"urn:xmlns:sigwin:wipt-get:repository\" ProductCode=\"{0}\">\r\n      <Version Major=\"{1}\" Minor=\"{2}\" Build=\"{3}\" />\r\n      <URL>{4}</URL>\r\n    </Package>";
+      string formatstring = "<Package xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06\" ProductCode=\"{0}\">\r\n      <Version Major=\"{1}\" Minor=\"{2}\" Build=\"{3}\" />\r\n      <URL>{4}</URL>\r\n    </Package>";
       XmlDocumentFragment frag = m_doc.CreateDocumentFragment();
       string[] vp = version.Split('.');
       string[] parts = new string[3]{"0","0","0"};
       Array.Copy(vp, parts, Math.Min(vp.Length, 3));
       frag.InnerXml = string.Format(formatstring, "{" + productCode.ToString().ToUpper() + "}", parts[0], parts[1], parts[2], URL);
 
-      string formatstring2 = "<Product xmlns=\"urn:xmlns:sigwin:wipt-get:repository\" Name=\"{0}\" UpgradeCode=\"{1}\" Publisher=\"{2}\" SupportURL=\"{3}\" ><StableVersion Major=\"{4}\" Minor=\"{5}\" Build=\"{6}\" /></Product>";
+      string formatstring2 = "<Product xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06\" Name=\"{0}\" UpgradeCode=\"{1}\" Publisher=\"{2}\" SupportURL=\"{3}\" ><StableVersion Major=\"{4}\" Minor=\"{5}\" Build=\"{6}\" /></Product>";
       XmlDocumentFragment frag2 = m_doc.CreateDocumentFragment();
       frag2.InnerXml = string.Format(formatstring2, productName, "{" + upgradeCode.ToString().ToUpper() + "}", publisher, supportURL, parts[0], parts[1], parts[2]);
 
