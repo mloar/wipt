@@ -41,16 +41,16 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Microsoft.Win32;
 
-namespace ACM.Wipt
+namespace Acm.Wipt
 {
-  public abstract class wipt_get
+  internal abstract class WiptGet
   {
     [DllImport("kernel32.dll")]
       private static extern uint FormatMessage(uint dwFlags, IntPtr lpSource, uint dwMessageId, uint dwLanguageId, 
           StringBuilder lpBuffer, uint nSize, IntPtr args);
 
     [STAThread]
-      public static int Main(string[] args)
+      internal static int Main(string[] args)
       {
         try
         {
@@ -226,7 +226,7 @@ namespace ACM.Wipt
             instVersion = product.stableVersion;
         }
 
-        string URL = "";
+        string Url = "";
         string properties = "";
         Patch[] patches = null;
 
@@ -246,23 +246,23 @@ namespace ACM.Wipt
             if((transform.minVersion == null || instVersion >= transform.minVersion) && 
                 (transform.maxVersion == null || instVersion <= transform.maxVersion))
             {
-              URL = transform.URL;
+              Url = transform.Url;
 
-              if(URL.StartsWith("file://"))
+              if(Url.StartsWith("file://"))
               {
                 // The Windows Installer system does not support file: URLs.  Don't know why.
-                URL = URL.Substring(7);
-                URL = URL.Replace("/", "\\");
+                Url = Url.Substring(7);
+                Url = Url.Replace("/", "\\");
                 // Windows appears to support either two or four slashes on UNC paths, so we
                 // support both.
-                if(URL[1] != ':' && URL[1] != '\\')
-                  URL = "\\\\" + URL;
+                if(Url[1] != ':' && Url[1] != '\\')
+                  Url = "\\\\" + Url;
               }
 
-              properties += URL + ";";
+              properties += Url + ";";
             }
           }
-          URL = "";
+          Url = "";
           properties += " ";
         }
         Guid productCode = Guid.Empty;
@@ -272,27 +272,27 @@ namespace ACM.Wipt
         {
           if(package.version == instVersion)
           {
-            URL = package.URL;
+            Url = package.Url;
             productCode = package.productCode;
             break;
           }
         }
 
-        if(URL == "")
+        if(Url == "")
         {
           Console.Error.WriteLine("No package listed for specified version of "
               + product.name + ".  Contact the repository maintainer.");
           return false;
         }
-        else if(URL.StartsWith("file://"))
+        else if(Url.StartsWith("file://"))
         {
           // The Windows Installer system does not support file: URLs.  Don't know why.
-          URL = URL.Substring(7);
-          URL = URL.Replace("/", "\\");
+          Url = Url.Substring(7);
+          Url = Url.Replace("/", "\\");
           // Windows appears to support either two or four slashes on UNC paths, so we
           // support both.
-          if(URL[1] != ':' && URL[1] != '\\')
-            URL = "\\\\" + URL;
+          if(Url[1] != ':' && Url[1] != '\\')
+            Url = "\\\\" + Url;
         }
 
         WindowsInstaller.MsiInstallState state = WindowsInstaller.QueryProductState(productCode);
@@ -327,7 +327,7 @@ namespace ACM.Wipt
             | WindowsInstaller.MsiInstallLogMode.FatalExit, IntPtr.Zero);
 
         uint ret;
-        ret = WindowsInstaller.InstallProduct(URL, properties);
+        ret = WindowsInstaller.InstallProduct(Url, properties);
         GC.KeepAlive(handler);
         Console.Write("\x08");
         Console.WriteLine(getErrorMessage(ret));
@@ -361,7 +361,7 @@ namespace ACM.Wipt
     {
       foreach(string p in packages)
       {
-        if(p == "")
+        if(p == null || p.Length == 0)
           continue;
         Version instVersion = new Version("0.0.0");
         string[] parts = p.Split('=');
@@ -446,7 +446,7 @@ namespace ACM.Wipt
           return false;
         }
 
-        string URL = "";
+        string Url = "";
         if(instVersion == null)
         {
           if(product.stableVersion == null)
@@ -462,21 +462,21 @@ namespace ACM.Wipt
         {
           if(package.version == instVersion)
           {
-            URL = package.URL;
+            Url = package.Url;
             break;
           }
         }
 
-        if(URL == "")
+        if(Url == "")
         {
           Console.Error.WriteLine("No package listed for specified version of "
               + product.name + ".  Contact the repository maintainer.");
           return false;
         }
 
-        string[] URLParts = URL.Split('/');
+        string[] UrlParts = Url.Split('/');
         WebClient wc = new WebClient();
-        wc.DownloadFile(URL, Environment.CurrentDirectory + "\\" + URLParts[URLParts.Length - 1]);
+        wc.DownloadFile(Url, Environment.CurrentDirectory + "\\" + UrlParts[UrlParts.Length - 1]);
       }
       catch(Exception e)
       {
@@ -487,7 +487,7 @@ namespace ACM.Wipt
       return true;
     }
 
-    public static bool ApplyPatches(Patch[] patches, Guid productCode)
+    internal static bool ApplyPatches(Patch[] patches, Guid productCode)
     {
       bool success = true;
       if(patches != null && patches.Length > 0)
@@ -504,7 +504,7 @@ namespace ACM.Wipt
             if(code == productCode)
             {
               Console.Write("Applying patch "+ patch.name + "... ");
-              uint ret = WindowsInstaller.ApplyPatch(patch.URL, "{" + productCode.ToString().ToUpper() + "}", 
+              uint ret = WindowsInstaller.ApplyPatch(patch.Url, "{" + productCode.ToString().ToUpper() + "}", 
                   WindowsInstaller.MsiInstallType.SingleInstance, "");
               Console.Write("\x08");
               Console.WriteLine(getErrorMessage(ret));
@@ -518,7 +518,7 @@ namespace ACM.Wipt
       return success;
     }
 
-    public static bool IsPatchApplied(Patch patch, Guid productCode)
+    internal static bool IsPatchApplied(Patch patch, Guid productCode)
     {
       Guid[] codes = WindowsInstaller.EnumPatches(productCode);
       foreach(Guid code in codes)
@@ -530,7 +530,7 @@ namespace ACM.Wipt
       return false;
     }
 
-    public static void Usage()
+    internal static void Usage()
     {
       string usage = @"
 Usage: wipt-get [options] <command> <product>[=version]...
@@ -553,7 +553,7 @@ copyright                   Show copyright notice";
       Console.WriteLine(usage);
     }
 
-    public static void Copyright()
+    internal static void Copyright()
     {
       string copyright = @"
 Copyright (c) 2006 Association for Computing Machinery at the 
@@ -590,7 +590,7 @@ DEALINGS WITH THE SOFTWARE.";
       Console.WriteLine(copyright);
     }
 
-    public static bool Update()
+    internal static bool Update()
     {
       try
       {
@@ -619,7 +619,7 @@ DEALINGS WITH THE SOFTWARE.";
       }
     }
 
-    public static void Upgrade(string[] products, bool ignoretransforms, bool ignorepatches, bool peruser,
+    internal static void Upgrade(string[] products, bool ignoretransforms, bool ignorepatches, bool peruser,
         string targetdir, string installlevel, bool reinstall)
     {
       Product[] list = new Product[0];
@@ -659,7 +659,7 @@ DEALINGS WITH THE SOFTWARE.";
       }
     }
 
-    public static void List(string[] userlist)
+    internal static void List(string[] userlist)
     {
       try
       {
@@ -816,7 +816,7 @@ DEALINGS WITH THE SOFTWARE.";
         throw new ApplicationException("Invalid Version");
     }
 
-    private static int index = 0;
+    private static int index; // initialized to 0 by runtime
     private static void ProgressHandler(double progress)
     {
       if(++index >= 4)
@@ -848,9 +848,9 @@ DEALINGS WITH THE SOFTWARE.";
       return buffer.ToString();
     }
 
-    private class WiptConfig
+    private abstract class WiptConfig
     {
-      public static string GetTargetPath()
+      internal static string GetTargetPath()
       {
         string targetdir = null;
         RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE\\ACM\\Wipt");

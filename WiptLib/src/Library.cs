@@ -41,7 +41,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 using Microsoft.Win32;
 
-namespace ACM.Wipt
+namespace Acm.Wipt
 {
   /// <remarks>A Package represents an MSI file.</remarks>
   [Serializable()]
@@ -52,7 +52,7 @@ namespace ACM.Wipt
       /// <summary>A Version object containing the MSI ProductVersion.</summary>
       public Version version;
       /// <summary>The URL of the package.</summary>
-      public string URL;
+      public string Url;
       /// <summary>The constructor for the Package class.</summary>
       /// <param name="ProductCode">
       /// The ProductCode of the Package.  Format-agnostic, but must be
@@ -93,7 +93,7 @@ namespace ACM.Wipt
       /// </summary>
       public Version maxVersion;
       /// <summary>The URL of the transform.</summary>
-      public string URL;
+      public string Url;
       /// <summary>The constructor for the Transform class.</summary>
       public Transform() {}
     }
@@ -111,7 +111,7 @@ namespace ACM.Wipt
       /// <summary>The product codes to which this patch applies.</summary>
       public Guid[] productCodes;
       /// <summary>The URL of the patch.</summary>
-      public string URL;
+      public string Url;
 
       /// <summary>The constructor for the Patch class.</summary>
       /// <param name="PatchCode">The PatchCode.</param>
@@ -138,7 +138,7 @@ namespace ACM.Wipt
       /// <summary>The publisher of the product.</summary>
       public string publisher;
       /// <summary>The support URL for the product.</summary>
-      public string supportURL;
+      public string supportUrl;
       /// <summary>A description of the product.</summary>
       public string description;
       /// <summary>A Version object for the product's release version.</summary>
@@ -153,12 +153,26 @@ namespace ACM.Wipt
       /// <summary>The constructor for the Product class.</summary>
       /// <param name="Name">The name of the Product.</param>
       /// <param name="Publisher">The publisher of the product.</param>
-      /// <param name="SupportURL">A support URL for the product.</param>
-      public Product(string Name, string Publisher, string SupportURL)
+      /// <param name="SupportUrl">A support URL for the product.</param>
+      public Product(string Name, string Publisher, string SupportUrl)
       {
         name = Name;
         publisher = Publisher;
-        supportURL = SupportURL;
+        supportUrl = SupportUrl;
+        packages = new Package[0];
+        transforms = new Transform[0];
+        patches = new Patch[0];
+      }
+
+      /// <summary>The constructor for the Product class.</summary>
+      /// <param name="Name">The name of the Product.</param>
+      /// <param name="Publisher">The publisher of the product.</param>
+      /// <param name="SupportUrl">A support URL for the product.</param>
+      public Product(string Name, string Publisher, System.Uri SupportUrl)
+      {
+        name = Name;
+        publisher = Publisher;
+        supportUrl = SupportUrl.ToString();
         packages = new Package[0];
         transforms = new Transform[0];
         patches = new Patch[0];
@@ -303,43 +317,43 @@ namespace ACM.Wipt
             "Registry key HKLM\\SOFTWARE\\ACM\\Wipt does not exist.");
       }
 
-      object URLs;
+      object Urls;
       if(rk2 != null)
       {
-        URLs = rk2.GetValue("Repositories");
-        if(!(URLs is String))
+        Urls = rk2.GetValue("Repositories");
+        if(!(Urls is String))
         {
-          URLs = rk.GetValue("Repositories");
+          Urls = rk.GetValue("Repositories");
         }
       }
       else
       {
-        URLs = rk.GetValue("Repositories");
+        Urls = rk.GetValue("Repositories");
       }
 
-      if(!(URLs is String))
+      if(!(Urls is String))
       {
         throw new WiptException(
             "Registry value Repositories does not exist or is not a string.");
       }
 
-      string[] repositories = ((string)URLs).Split(' ');
+      string[] repositories = ((string)Urls).Split(' ');
 
-      foreach(string URL in repositories)
+      foreach(string Url in repositories)
       {
 
         try
         {
-          ret = ret && Update(URL);
+          ret = ret && Update(Url);
         }
         catch(UriFormatException e)
         {
-          throw new WiptException("Invalid URL: " + URL, e);
+          throw new WiptException("Invalid URL: " + Url, e);
         }
         catch(NotSupportedException e)
         {
           throw new WiptException(
-              "Repository URL is for an unsupported protocol: " + URL, e);
+              "Repository URL is for an unsupported protocol: " + Url, e);
         }
       }
 
@@ -357,7 +371,7 @@ namespace ACM.Wipt
     /// Used internally by the Library to update the package list for a single
     /// repository.
     /// </summary>
-    /// <param name="URL">
+    /// <param name="Url">
     /// URL of the package file.
     /// </param>
     /// <returns>
@@ -367,9 +381,9 @@ namespace ACM.Wipt
     /// An exception is thrown if two product names match, but the upgrade
     /// codes differ.
     /// </exception>
-    private static bool Update(string URL)
+    private static bool Update(string Url)
     {
-      WebRequest req = WebRequest.Create(new Uri(URL));
+      WebRequest req = WebRequest.Create(new Uri(Url));
       Stream i;
 
       try
@@ -440,7 +454,7 @@ namespace ACM.Wipt
                               n.GetAttribute("Build"));
                         break;
                         case "URL":
-                          q.URL = n.InnerText;
+                          q.Url = n.InnerText;
                         break;
                       }
                     }
@@ -457,7 +471,7 @@ namespace ACM.Wipt
                     {
                       if(v.Name == "URL")
                       {
-                        g.URL = v.InnerText;
+                        g.Url = v.InnerText;
                       }
                       else if(v.Name == "ProductCode")
                       {
@@ -500,7 +514,7 @@ namespace ACM.Wipt
                                 );
                             break;
                             case "URL":
-                              a.URL = t.InnerText;
+                              a.Url = t.InnerText;
                             break;
                           } 
                         } 

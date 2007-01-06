@@ -36,7 +36,7 @@ using System;
 using System.Text;
 using System.Xml;
 
-namespace ACM.Wipt
+namespace Acm.Wipt
 {
   /// <remarks>Represents a repository file.</remarks>
   public class Repository
@@ -60,14 +60,14 @@ namespace ACM.Wipt
     /// <summary>Creates a new repository file.</summary>
     /// <param name="xmlFile">The local file path.</param>
     /// <param name="maintainer">The name of the repository maintainer.</param>
-    /// <param name="supportURL">URL for support of this repository.</param>
+    /// <param name="supportUrl">URL for support of this repository.</param>
     /// <returns>A reference to the newly created Repository.</returns>
-    public static Repository Create(string xmlFile, string maintainer, string supportURL)
+    public static Repository Create(string xmlFile, string maintainer, string supportUrl)
     {
       string formatstring = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n<Repository xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:SchemaLocation=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06 http://www.acm.uiuc.edu/sigwin/wipt/2006/06/repository.xsd\" Maintainer=\"{0}\" SupportURL=\"{1}\"></Repository>";
 
       XmlDocument newDoc = new XmlDocument();
-      newDoc.LoadXml(string.Format(formatstring, maintainer, supportURL));
+      newDoc.LoadXml(string.Format(formatstring, maintainer, supportUrl));
 
       XmlTextWriter tex = new XmlTextWriter(xmlFile, Encoding.UTF8);
       tex.Formatting = Formatting.Indented;
@@ -96,25 +96,25 @@ namespace ACM.Wipt
     /// <param name="productName">The name of the product.</param>
     /// <param name="upgradeCode">The product's UpgradeCode.</param>
     /// <param name="publisher">The product's publisher.</param>
-    /// <param name="supportURL">URL for support of the product.</param>
+    /// <param name="supportUrl">URL for support of the product.</param>
     /// <param name="version">A dotted version string for this package.</param>
     /// <param name="productCode">The package's product code.</param>
-    /// <param name="URL">The URL for the package.</param>
+    /// <param name="Url">The URL for the package.</param>
     /// <param name="makestable">Whether this package should be made the stable version for the product</param>
     /// <returns>true if the package could be added, false otherwise.</returns>
-    public bool AddPackage(string productName, Guid upgradeCode, string publisher, string supportURL, string version,
-        Guid productCode, string URL, bool makestable)
+    public bool AddPackage(string productName, Guid upgradeCode, string publisher, string supportUrl, string version,
+        Guid productCode, string Url, bool makestable)
     {
       string formatstring = "<Package xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06\" ProductCode=\"{0}\">\r\n      <Version Major=\"{1}\" Minor=\"{2}\" Build=\"{3}\" />\r\n      <URL>{4}</URL>\r\n    </Package>";
       XmlDocumentFragment frag = m_doc.CreateDocumentFragment();
       string[] vp = version.Split('.');
       string[] parts = new string[3]{"0","0","0"};
       Array.Copy(vp, parts, Math.Min(vp.Length, 3));
-      frag.InnerXml = string.Format(formatstring, "{" + productCode.ToString().ToUpper() + "}", parts[0], parts[1], parts[2], URL);
+      frag.InnerXml = string.Format(formatstring, "{" + productCode.ToString().ToUpper() + "}", parts[0], parts[1], parts[2], Url);
 
       string formatstring2 = "<Product xmlns=\"http://www.acm.uiuc.edu/sigwin/wipt/2006/06\" Name=\"{0}\" UpgradeCode=\"{1}\" Publisher=\"{2}\" SupportURL=\"{3}\" ><StableVersion Major=\"{4}\" Minor=\"{5}\" Build=\"{6}\" /></Product>";
       XmlDocumentFragment frag2 = m_doc.CreateDocumentFragment();
-      frag2.InnerXml = string.Format(formatstring2, productName, "{" + upgradeCode.ToString().ToUpper() + "}", publisher, supportURL, parts[0], parts[1], parts[2]);
+      frag2.InnerXml = string.Format(formatstring2, productName, "{" + upgradeCode.ToString().ToUpper() + "}", publisher, supportUrl, parts[0], parts[1], parts[2]);
 
       foreach(XmlLinkedNode l in m_doc.ChildNodes)
       {

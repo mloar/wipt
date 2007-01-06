@@ -38,12 +38,12 @@ using System.Net;
 using System.Xml;
 using Microsoft.Win32;
 
-namespace ACM.Wipt
+namespace Acm.Wipt
 {
-  public class wipt_put
+  internal class WiptPut
   {
     [STAThread]
-      public static void Main(string[] args)
+      internal static void Main(string[] args)
       {
         string command = "";
         string repofile = "";
@@ -139,7 +139,7 @@ namespace ACM.Wipt
               System.IO.File.Delete(tempy);
               webc.DownloadFile(msiurl, tempy);
               WindowsInstaller.MsiDatabase db = new WindowsInstaller.MsiDatabase(tempy);
-              Console.WriteLine("MSI Valid");
+              Console.WriteLine("MSI Valid: Product Code is {0}", db.ProductCode);
             }
             catch(Exception)
             {
@@ -207,7 +207,7 @@ namespace ACM.Wipt
         }
       }
 
-    public static void Usage()
+    internal static void Usage()
     {
       string usage = @"
     Usage: wipt-put create <Repository File> <Maintainer> <Support URL>

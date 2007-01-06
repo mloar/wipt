@@ -40,14 +40,14 @@ using System.Runtime.CompilerServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly: AssemblyTitle("Wipt-Put")]
-[assembly: AssemblyDescription("Wipt Repository Maintenance Utility")]
+[assembly: AssemblyTitle("Wipt-Get")]
+[assembly: AssemblyDescription("Wipt Application Maintenance Utility")]
 [assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCompany("SIGWin, ACM@UIUC")]
 [assembly: AssemblyProduct("Windows Installer Package Tool")]
 [assembly: AssemblyCopyright("Copyright 2006 ACM@UIUC.  All rights reserved.")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]		
+[assembly: AssemblyCulture("")]   
 
 //
 // In order to sign your assembly you must specify a key to use. Refer to the 
@@ -75,5 +75,5 @@ using System.Runtime.CompilerServices;
 //       documentation for more information on this.
 //
 [assembly: AssemblyDelaySign(false)]
-[assembly: AssemblyKeyFile("..\\keys\\wipt-put.snk")]
+[assembly: AssemblyKeyFile("..\\keys\\wipt-get.snk")]
 [assembly: AssemblyKeyName("")]

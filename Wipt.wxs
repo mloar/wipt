@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="4DA8E6BB-E79D-4EE0-99FE-E1053D0AAF0D" UpgradeCode="C1781722-8046-4A2A-8419-5CBC9616220C"
+	<Product Id="51010791-B14F-4F5D-9336-EABEA790BDA4" UpgradeCode="C1781722-8046-4A2A-8419-5CBC9616220C"
 		Name="Wipt" Language="1033" Version="$(var.ProductVersion)" Manufacturer="ACM@UIUC">
 		<Package Description="Windows Installer Package Tool" 
       Comments="This Installer database contains the logic and data required to install Wipt."

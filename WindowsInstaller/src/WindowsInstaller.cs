@@ -36,7 +36,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace ACM.Wipt
+namespace Acm.Wipt
 {
   /// <remarks>This implements a partial interface to the Windows Installer.</remarks>
   public abstract class WindowsInstaller
