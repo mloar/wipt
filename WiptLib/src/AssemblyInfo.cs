@@ -56,6 +56,6 @@ using System.Runtime.CompilerServices;
 //   (*) Delay Signing is an advanced option - see the Microsoft .NET Framework
 //       documentation for more information on this.
 //
-[assembly: AssemblyDelaySign(false)]
+[assembly: AssemblyDelaySign(true)]
 [assembly: AssemblyKeyFile("..\\keys\\WiptLib.snk")]
 [assembly: AssemblyKeyName("")]
