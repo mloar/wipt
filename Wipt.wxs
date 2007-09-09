@@ -9,7 +9,7 @@
 		<Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
     <UIRef Id="WixUI_InstallDir" />
     <CustomAction Id="SetTargetDir" Property="TARGETDIR" Value="[ProgramFilesFolder]" />
-    <WixVariable Id="WixUILicenseRtf" Value="C:\Users\mloar2\Documents\Projects\Wipt\LICENSE.rtf" />
+    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
 		<Directory Id="TARGETDIR" Name="SourceDir">
 				<Directory Id="ACMDir" Name="ACM">
 					<Directory Id="INSTALLDIR" Name="Wipt">
